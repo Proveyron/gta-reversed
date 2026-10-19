@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:20:17 UTC
+Last update was at Oct 19, 2026 at 15:22:39 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7536 out of 8295 functions done in 719 categories)
+## Stats (7537 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (587/719) [82%]
+#### Completely reversed categories (588/719) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -191,6 +191,7 @@ Last update was at Oct 19, 2026 at 15:20:17 UTC
 - FxSystemBP_c (10)<br />
 - FxSphere_c (4)<br />
 - FxMemoryPool_c (5)<br />
+- FxManager_c (25)<br />
 - FxEmitterPrt_c (1)<br />
 - Fx_c (8)<br />
 - CPedAttractorPedPlacer (1)<br />
@@ -604,7 +605,7 @@ Last update was at Oct 19, 2026 at 15:20:17 UTC
 
 </details>
 
-#### Partially reversed categories (124/719) [17%]
+#### Partially reversed categories (123/719) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -659,7 +660,6 @@ Last update was at Oct 19, 2026 at 15:20:17 UTC
 - FxSystem_c (31/35) [89%]<br />
 - FxPrimBP_c (1/2) [50%]<br />
 - FxInfoManager_c (4/5) [80%]<br />
-- FxManager_c (24/25) [96%]<br />
 - FxEmitterBP_c (2/9) [22%]<br />
 - CPed (137/145) [94%]<br />
 - CPlayerPed (50/65) [77%]<br />

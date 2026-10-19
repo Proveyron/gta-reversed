@@ -17992,7 +17992,7 @@
   {
     "Category": "FxManager_c",
     "Name": "DestroyAllFxSystems",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "FxManager_c",
