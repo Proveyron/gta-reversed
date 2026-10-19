@@ -33192,7 +33192,7 @@
     {
         "Category": "CConversations",
         "Name": "DoneSettingUpConversation",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CConversationForPed",
