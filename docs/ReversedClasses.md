@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:56:17 UTC
+Last update was at Oct 19, 2026 at 15:59:07 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7549 out of 8295 functions done in 719 categories)
+## Stats (7550 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (598/719) [83%]
+#### Completely reversed categories (599/719) [83%]
 
 <details>
 <summary>See list of categories</summary>
@@ -611,11 +611,12 @@ Last update was at Oct 19, 2026 at 15:56:17 UTC
 - InteriorManager_c (21)<br />
 - CTheScripts (69)<br />
 - CStreamedScripts (12)<br />
+- CScripted2dEffects (5)<br />
 - CScriptResourceManager (4)<br />
 
 </details>
 
-#### Partially reversed categories (114/719) [16%]
+#### Partially reversed categories (113/719) [16%]
 
 <details>
 <summary>See list of categories</summary>
@@ -732,7 +733,6 @@ Last update was at Oct 19, 2026 at 15:56:17 UTC
 - CVehicle (145/149) [97%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
 - CRunningScript (24/39) [62%]<br />
-- CScripted2dEffects (4/5) [80%]<br />
 
 </details>
 

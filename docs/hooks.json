@@ -41397,7 +41397,7 @@
     {
         "Category": "CScripted2dEffects",
         "Name": "Init",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CScripted2dEffects",
