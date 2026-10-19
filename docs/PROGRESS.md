@@ -1,14 +1,14 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 22:00:12 UTC
+Last update was at Oct 19, 2026 at 22:07:04 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7649 out of 8295 functions done in 719 categories)
+## Stats (7651 out of 8295 functions done in 719 categories)
 
 #### Completely reversed categories (657/719) [91%]
 
@@ -718,7 +718,7 @@ Last update was at Oct 19, 2026 at 22:00:12 UTC
 - CTaskComplexFollowLeaderInFormation (1/7) [14%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
 - CTaskComplexSunbathe (2/8) [25%]<br />
-- CTaskComplexWalkRoundCar (9/13) [69%]<br />
+- CTaskComplexWalkRoundCar (11/13) [85%]<br />
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - CAEPedAudioEntity (16/20) [80%]<br />

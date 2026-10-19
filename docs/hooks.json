@@ -30997,12 +30997,12 @@
   {
     "Category": "CTaskComplexWalkRoundCar",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWalkRoundCar",
     "Name": "ControlSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexMedicTreatInjuredPed",
