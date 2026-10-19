@@ -30,7 +30,7 @@ void CTaskSimpleUseGun::InjectHooks() {
     RH_ScopedVMTInstall(Clone, 0x622F20);
     RH_ScopedVMTInstall(GetTaskType, 0x61DF20);
     RH_ScopedVMTInstall(MakeAbortable, 0x624E30);
-    RH_ScopedVMTInstall(ProcessPed, 0x62A380, { .Reversed = false });
+    RH_ScopedVMTInstall(ProcessPed, 0x62A380);
     RH_ScopedVMTInstall(SetPedPosition, 0x624ED0);
 }
 
@@ -422,16 +422,12 @@ bool CTaskSimpleUseGun::MakeAbortable(CPed* ped, eAbortPriority priority, const 
 
 // 0x62A380
 bool CTaskSimpleUseGun::ProcessPed(CPed* ped) {
-    return plugin::CallMethodAndReturn<bool, 0x62A380>(this, ped);
-    /*
-    * Code so far (should be) good, but has to be finished...
-    * 
-    m_IsLookIKInUse    = m_IsLookIKInUse && g_ikChainMan.IsLooking(ped);
-    m_IsArmIKInUse     = m_IsArmIKInUse && g_ikChainMan.IsArmPointing(0, ped);
+    m_IsLookIKInUse = m_IsLookIKInUse && g_ikChainMan.IsLooking(ped);
+    m_IsArmIKInUse  = m_IsArmIKInUse && g_ikChainMan.IsArmPointing(0, ped);
     m_IsFiringGunRightHandThisFrame = false;
     m_IsFiringGunLeftHandThisFrame = false;
 
-    if (m_WeaponInfo) { // Inverted
+    if (m_WeaponInfo) {
         if (m_WeaponInfo != &ped->GetActiveWeapon().GetWeaponInfo(ped)) {
             MakeAbortable(ped);
         }
@@ -445,7 +441,6 @@ bool CTaskSimpleUseGun::ProcessPed(CPed* ped) {
         if (m_WeaponInfo->m_nWeaponFire == 0 || m_WeaponInfo->flags.bThrow) {
             m_IsFinished = true;
             m_WeaponInfo = nullptr;
-
             AbortIK(ped);
             if (const auto pd = ped->GetPlayerData()) {
                 pd->m_fAttackButtonCounter = 0.f;
@@ -466,19 +461,18 @@ bool CTaskSimpleUseGun::ProcessPed(CPed* ped) {
         if (m_IsInControl) {
             m_CountDownFrames = -1;
             if (ped->bDuckRightArmBlocked && (ped->bGetUpAnimStarted || !m_WeaponInfo->flags.bAimWithArm)) {
-                if (m_LastCmd != eGunCommand::PISTOLWHIP && (m_NextCmd != eGunCommand::PISTOLWHIP || m_Anim)) { // 0x62A532
+                if (m_LastCmd != eGunCommand::PISTOLWHIP && (m_NextCmd != eGunCommand::PISTOLWHIP || m_Anim)) {
                     if (m_Anim) {
                         m_Anim->SetBlendDelta(-4.f);
                         m_Anim->SetFlag(ANIMATION_IS_PLAYING, false);
                         m_Anim->SetFlag(ANIMATION_FREEZE_LAST_FRAME, true);
-                    } else if (notsa::contains({ eGunCommand::AIM, eGunCommand::FIRE, eGunCommand::FIREBURST }, m_NextCmd)) { // 0x62A63B - Inverted
+                    } else if (notsa::contains({ eGunCommand::AIM, eGunCommand::FIRE, eGunCommand::FIREBURST }, m_NextCmd)) {
                         AbortIK(ped);
                         m_IsLOSBlocked = true;
                         if (m_LastCmd == eGunCommand::FIREBURST) {
                             m_LastCmd = eGunCommand::AIM;
                         }
 
-                    SET_MOVE_ANIM_AND_COMMAND_RET_0: // 0x62A586
                         if (m_WeaponInfo->flags.bAimWithArm || ped->bIsDucking || m_HasMoveControl) {
                             SetMoveAnim(ped);
                         }
@@ -491,7 +485,7 @@ bool CTaskSimpleUseGun::ProcessPed(CPed* ped) {
                         return false;
                     }
                 }
-            } else if (m_NextCmd == eGunCommand::PISTOLWHIP && m_LastCmd <= eGunCommand::FIREBURST) { // 0x62A5E4
+            } else if (m_NextCmd == eGunCommand::PISTOLWHIP && m_LastCmd <= eGunCommand::FIREBURST) {
                 if (m_Anim) {
                     m_Anim->SetDefaultDeleteCallback();
                     m_Anim = nullptr;
@@ -499,33 +493,42 @@ bool CTaskSimpleUseGun::ProcessPed(CPed* ped) {
                 AbortIK(ped);
             }
 
-            if (!m_Anim) { // 0x62A55B
+            if (!m_Anim) {
                 StartAnim(ped);
                 if (!m_Anim) {
                     AbortIK(ped);
                 }
-                goto SET_MOVE_ANIM_AND_COMMAND_RET_0;
+                if (m_WeaponInfo->flags.bAimWithArm || ped->bIsDucking || m_HasMoveControl) {
+                    SetMoveAnim(ped);
+                }
+                if (m_NextCmd < eGunCommand::END_LEISURE) {
+                    if (m_NextCmd != eGunCommand::RELOAD || notsa::contains({ eGunCommand::FIRE, eGunCommand::FIREBURST }, m_LastCmd)) {
+                        m_NextCmd = eGunCommand::NONE;
+                    }
+                }
+                m_IsInControl = false;
+                return false;
             }
 
-            if (m_LastCmd == eGunCommand::RELOAD) { // 0x62A65A
+            if (m_LastCmd == eGunCommand::RELOAD) {
                 if (notsa::contains({ ANIM_ID_RELOAD, ANIM_ID_CROUCHRELOAD }, m_Anim->GetAnimId())) {
                     if (m_Anim->GetBlendDelta() >= 0.f) {
                         m_Anim->SetBlendDelta(-4.f);
                     }
                 }
                 m_SkipAim = false;
-                if (ped->m_pedIK.bUseArm) { // 0x62ACB7
-                    const auto isAimTargetPedDead = 
-                    const auto aimTargetPos = GetAimTargetPosition(ped, isAimTargetPedDead);
+                if (ped->m_pedIK.bUseArm) {
+                    const auto isAimTargetPedDead = m_TargetEntity && m_TargetEntity->GetIsTypePed() && m_TargetEntity->AsPed()->m_fHealth <= 0.f;
+                    const auto aimTargetPos = GetAimTargetPosition(ped);
                     if (aimTargetPos.x != 0.f || aimTargetPos.y != 0.f) {
-                        const auto aimDir = (aimTargetPos - ped->GetPosition()).Normalized(); // 0x62ADF0
+                        const auto aimDir = (aimTargetPos - ped->GetPosition()).Normalized();
                         const auto targetAngleToUs = CGeneral::LimitRadianAngle(aimDir.Heading() - ped->m_fCurrentRotation);
                         m_SkipAim = [&, this]{
-                            if (m_TargetEntity && m_TargetEntity->GetIsTypePed() && m_TargetEntity->AsPed()->m_fHealth <= 0.f) {
+                            if (isAimTargetPedDead) {
                                 if (DegreesToRadians(115.f - 40.f) < targetAngleToUs || targetAngleToUs < -DegreesToRadians(130.f - 40.f)) {
                                     return true;
                                 }
-                                if (aimDir.Dot(ped->GetUpVector()) < -0.8f) { // 0x62AE84
+                                if (aimDir.Dot(ped->GetUpVector()) < -0.8f) {
                                     return true;
                                 }
                             } else {
@@ -536,12 +539,33 @@ bool CTaskSimpleUseGun::ProcessPed(CPed* ped) {
                             return m_SkipAim;
                         }();
                     }
-                    m_SkipAim |= ped->bIsDucking && ped->bDuckRightArmBlocked; // 0x62AEB6
+                    m_SkipAim |= ped->bIsDucking && ped->bDuckRightArmBlocked;
                 }
             }
+
+            if (m_LastCmd != eGunCommand::NONE && m_LastCmd < eGunCommand::END_LEISURE && !m_SkipAim) {
+                AimGun(ped);
+            }
         }
+
+        if (m_WeaponInfo->flags.bAimWithArm || ped->bIsDucking || m_HasMoveControl) {
+            SetMoveAnim(ped);
+        }
+        if (m_NextCmd < eGunCommand::END_LEISURE) {
+            if (m_NextCmd != eGunCommand::RELOAD || notsa::contains({ eGunCommand::FIRE, eGunCommand::FIREBURST }, m_LastCmd)) {
+                m_NextCmd = eGunCommand::NONE;
+            }
+        }
+        m_IsInControl = false;
+        return false;
     }
-    */
+
+    RemoveStanceAnims(ped, -4.f);
+    AbortIK(ped);
+    if (const auto pd = ped->GetPlayerData()) {
+        pd->m_fAttackButtonCounter = 0.f;
+    }
+    return true;
 }
 
 // 0x624ED0

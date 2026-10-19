@@ -252,6 +252,7 @@ struct C2dEffect : public C2dEffectBase {
         tEffectSlotMachineWheel slotMachineIndex;
         tEffectCoverPoint       coverPoint;
         tEffectEscalator        escalator;
+        tEffectInterior         interior;
     };
 
 public:

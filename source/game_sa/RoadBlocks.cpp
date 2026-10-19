@@ -4,6 +4,9 @@
 #include "PedPlacement.h"
 #include "TaskComplexWanderCop.h"
 #include "TaskSimpleStandStill.h"
+#include "Automobile.h"
+#include "FireManager.h"
+#include "Population.h"
 #include <extensions/File.hpp>
 
 void CRoadBlocks::InjectHooks() {
@@ -13,7 +16,7 @@ void CRoadBlocks::InjectHooks() {
     RH_ScopedInstall(Init, 0x461100);
     RH_ScopedInstall(ClearScriptRoadBlocks, 0x460EC0);
     RH_ScopedInstall(ClearSpaceForRoadBlockObject, 0x461020);
-    RH_ScopedInstall(CreateRoadBlockBetween2Points, 0x4619C0, { .Reversed = false });
+    RH_ScopedInstall(CreateRoadBlockBetween2Points, 0x4619C0);
     RH_ScopedInstall(GenerateRoadBlockPedsForCar, 0x461170);
     RH_ScopedInstall(GenerateRoadBlocks, 0x4629E0);
     RH_ScopedInstall(GetRoadBlockNodeInfo, 0x460EE0);
@@ -102,7 +105,239 @@ bool CRoadBlocks::ClearSpaceForRoadBlockObject(CVector cornerA, CVector cornerB)
 
 // 0x4619C0
 void CRoadBlocks::CreateRoadBlockBetween2Points(CVector a, CVector b, bool isGangRoadBlock) {
-    plugin::Call<0x4619C0, CVector, CVector, bool>(a, b, isGangRoadBlock);
+    CVector diff = b - a;
+    float len = diff.Magnitude();
+    CVector mid = (a + b) * 0.5f;
+
+    CVector dir = diff;
+    dir.Normalise();
+
+    CVector perp(-dir.y, dir.x, 0.0f);
+    perp.Normalise();
+
+    CVector toPlayer = FindPlayerCoors() - mid;
+    if (DotProduct(toPlayer, perp) < 0.0f) {
+        perp = -perp;
+    }
+
+    int32 modelIndex = MODEL_INVALID;
+    if (isGangRoadBlock) {
+        modelIndex = CPopulation::PickRiotRoadBlockCar();
+        if (modelIndex == MODEL_INVALID) {
+            return;
+        }
+    } else {
+        CWanted* wanted = FindPlayerWanted();
+        if (wanted->AreArmyRequired()) {
+            modelIndex = MODEL_BARRACKS;
+        } else if (wanted->AreFbiRequired()) {
+            modelIndex = MODEL_FBIRANCH;
+        } else if (wanted->AreSwatRequired()) {
+            modelIndex = MODEL_ENFORCER;
+        } else {
+            modelIndex = CStreaming::GetDefaultCopCarModel(false);
+        }
+
+        if (CStreaming::ms_aInfoForModel[modelIndex].m_nLoadState != LOADSTATE_LOADED) {
+            modelIndex = CStreaming::GetDefaultCopCarModel(false);
+        }
+
+        if (modelIndex == MODEL_POLMAV) {
+            return;
+        }
+    }
+
+    CColModel* colModel = CModelInfo::GetModelInfo(modelIndex)->GetColModel();
+    const CBoundingBox& bbox = colModel->GetBoundingBox();
+
+    float carWidth = (bbox.m_vecMax.x - bbox.m_vecMin.x) + 2.0f;
+    float carLength = (bbox.m_vecMax.y - bbox.m_vecMin.y) + 0.2f;
+    if (isGangRoadBlock) {
+        carLength += 0.5f;
+    }
+
+    float remainingLen = len;
+    int32 numCars = 0;
+    bool carOrientations[5]{};
+
+    for (int32 i = 0; i < 5; i++) {
+        if (modelIndex == MODEL_BARRACKS || isGangRoadBlock) {
+            carOrientations[i] = false;
+        } else {
+            carOrientations[i] = (CGeneral::GetRandomNumber() & 1);
+        }
+
+        float widthNeeded = carOrientations[i] ? carWidth : carLength;
+        if (remainingLen < widthNeeded) {
+            break;
+        }
+        remainingLen -= widthNeeded;
+        numCars++;
+        if (numCars == 5) {
+            break;
+        }
+    }
+
+    float spacing = remainingLen / (float)(numCars + 1);
+
+    if (numCars > 0) {
+        float curOffset = spacing;
+        for (int32 i = 0; i < numCars; i++) {
+            float halfDim = carOrientations[i] ? (carWidth * 0.5f) : (carLength * 0.5f);
+            curOffset += halfDim;
+
+            CVector carPos = a + dir * curOffset;
+            CMatrix carMatrix;
+            carMatrix.SetUnity();
+
+            bool isPerp = false;
+            if (carOrientations[i]) {
+                carMatrix.GetForward() = -perp;
+                carMatrix.GetRight() = -dir;
+                carMatrix.GetUp() = CVector(0.0f, 0.0f, 1.0f);
+
+                if (CGeneral::GetRandomNumber() & 1) {
+                    carMatrix.RotateZ(PI);
+                }
+                float angle = ((float)(CGeneral::GetRandomNumber() & 0xFF) - 128.0f) * (isGangRoadBlock ? 0.004f : 0.002f);
+                carMatrix.RotateZ(angle);
+            } else {
+                if (isGangRoadBlock) {
+                    isPerp = (CGeneral::GetRandomNumber() & 0xFF) < 0x40;
+                }
+                if (isPerp) {
+                    carMatrix.GetForward() = CVector(0.0f, 0.0f, 1.0f);
+                    carMatrix.GetRight() = CVector(-dir.y, 0.0f, dir.x);
+                    carMatrix.GetUp() = CVector(0.0f, 0.0f, 1.0f);
+                } else {
+                    carMatrix.GetForward() = -dir;
+                    carMatrix.GetRight() = perp;
+                    carMatrix.GetUp() = CVector(0.0f, 0.0f, 1.0f);
+                }
+
+                if (CGeneral::GetRandomNumber() & 1) {
+                    if (isPerp) {
+                        carMatrix.RotateX(PI);
+                    } else {
+                        carMatrix.RotateZ(PI);
+                    }
+                }
+                float angle = ((float)(CGeneral::GetRandomNumber() & 0xFF) - 128.0f) * (isGangRoadBlock ? 0.006f : 0.003f);
+                carMatrix.RotateZ(angle);
+            }
+
+            carPos.z = CWorld::FindGroundZFor3DCoord(carPos.x, carPos.y, carPos.z + 2.0f, nullptr, nullptr) + 0.3f;
+            if (isPerp) {
+                carPos.z -= bbox.m_vecMin.x;
+            } else {
+                carPos.z -= bbox.m_vecMin.z;
+            }
+
+            carMatrix.GetPosition() = carPos;
+
+            CVector minBox = carMatrix.TransformPoint(bbox.m_vecMin);
+            CVector maxBox = carMatrix.TransformPoint(bbox.m_vecMax);
+            CVector boxA(std::min(minBox.x, maxBox.x), std::min(minBox.y, maxBox.y), std::min(minBox.z, maxBox.z));
+            CVector boxB(std::max(minBox.x, maxBox.x), std::max(minBox.y, maxBox.y), std::max(minBox.z, maxBox.z));
+
+            if (ClearSpaceForRoadBlockObject(boxA, boxB)) {
+                if (isGangRoadBlock && (isPerp || (CGeneral::GetRandomNumber() & 0xFF) < 0x40)) {
+                    auto* obj = new CObject(ModelIndices::MI_ROADBLOCKFUCKEDCAR1, true);
+                    obj->SetMatrix(carMatrix);
+                    obj->SetPosition(carPos);
+                    obj->m_nStatus = STATUS_PHYSICS;
+                    obj->m_nObjectType = OBJECT_TEMPORARY;
+                    obj->m_nRemovalTime = CTimer::m_snTimeInMilliseconds + 600000;
+                    CWorld::Add(obj);
+                    CObject::nNoTempObjects++;
+                    gFireManager.StartFire(obj, nullptr, 0.8f, 1, 60000, 2);
+                    if (obj->m_pFire) {
+                        obj->m_pFire->m_nFlags = 0x5C;
+                    }
+                } else {
+                    auto* veh = new CAutomobile(modelIndex, MISSION_VEHICLE);
+                    veh->vehicleFlags.bCreateRoadBlockPeds = true;
+                    veh->SetStatus(STATUS_PHYSICS);
+                    veh->m_eDoorLock = CARLOCK_LOCKED;
+                    veh->SetMatrix(carMatrix);
+                    veh->m_vecMoveSpeed = CVector(0.0f, 0.0f, 0.0f);
+                    veh->m_vecTurnSpeed = CVector(0.0f, 0.0f, 0.0f);
+                    veh->m_fSteerAngle = 0.0f;
+                    veh->m_fGasPedal = 0.0f;
+                    veh->m_fBrakePedal = 0.0f;
+                    veh->vehicleFlags.bIsLocked = true;
+
+                    if (isGangRoadBlock) {
+                        if (CGeneral::GetRandomNumber() & 1) {
+                            veh->BurstTyre(0, true);
+                            veh->BurstTyre(1, true);
+                            veh->BurstTyre(2, true);
+                            veh->BurstTyre(3, true);
+                            veh->m_fHealth = 100.0f;
+                        }
+                    } else {
+                        if (veh->m_pHandling->m_fSuspensionForceLevel >= 0.94f) {
+                            if (CGeneral::GetRandomNumber() & 1) {
+                                veh->m_nNumPedsForRoadBlock = 1;
+                            } else {
+                                veh->m_nNumPedsForRoadBlock = 2;
+                            }
+                            GenerateRoadBlockPedsForCar(veh, i, PED_TYPE_COP);
+                        }
+                    }
+
+                    CWorld::Add(veh);
+                }
+            }
+
+            curOffset += halfDim;
+        }
+    }
+
+    if (!isGangRoadBlock && ModelIndices::MI_ROADWORKBARRIER1 != MODEL_INVALID) {
+        CColModel* barrierCol = CModelInfo::GetModelInfo(ModelIndices::MI_ROADWORKBARRIER1)->GetColModel();
+        const CBoundingBox& bBox = barrierCol->GetBoundingBox();
+        float barrierWidth = (bBox.m_vecMax.x - bBox.m_vecMin.x) + 0.5f;
+
+        int32 numBarriers = std::min((int32)(len / barrierWidth), 8);
+        if (numBarriers > 0) {
+            float bSpacing = (len - ((float)numBarriers * barrierWidth)) / (float)(numBarriers + 1);
+            for (int32 i = 0; i < numBarriers; i++) {
+                float bOffset = (float)(i + 1) * bSpacing + ((float)i + 0.5f) * barrierWidth;
+                CVector bPos = a + dir * bOffset + perp * 5.0f;
+
+                CMatrix bMatrix;
+                bMatrix.SetUnity();
+                bMatrix.GetForward() = perp;
+                bMatrix.GetRight() = -dir;
+                bMatrix.GetUp() = CVector(0.0f, 0.0f, 1.0f);
+
+                float rotAngle = ((float)(CGeneral::GetRandomNumber() & 0xFF) - 128.0f) * 0.003f;
+                bMatrix.RotateZ(rotAngle);
+
+                bPos.x += (float)(CGeneral::GetRandomNumber() & 0xF) * 0.05f;
+                bPos.y += (float)(CGeneral::GetRandomNumber() & 0xF) * 0.05f;
+                bPos.z = CWorld::FindGroundZFor3DCoord(bPos.x, bPos.y, bPos.z + 2.0f, nullptr, nullptr) + 0.3f;
+                bPos.z -= bBox.m_vecMin.z;
+                bMatrix.GetPosition() = bPos;
+
+                CVector minB = bMatrix.TransformPoint(bBox.m_vecMin);
+                CVector maxB = bMatrix.TransformPoint(bBox.m_vecMax);
+                CVector boxA(std::min(minB.x, maxB.x), std::min(minB.y, maxB.y), std::min(minB.z, maxB.z));
+                CVector boxB(std::max(minB.x, maxB.x), std::max(minB.y, maxB.y), std::max(minB.z, maxB.z));
+
+                if (ClearSpaceForRoadBlockObject(boxA, boxB)) {
+                    auto* obj = new CObject(ModelIndices::MI_ROADWORKBARRIER1, true);
+                    obj->SetMatrix(bMatrix);
+                    obj->SetPosition(bPos);
+                    obj->m_nObjectType = OBJECT_TEMPORARY;
+                    obj->m_nRemovalTime = CTimer::m_snTimeInMilliseconds + 600000;
+                    CWorld::Add(obj);
+                    CObject::nNoTempObjects++;
+                }
+            }
+        }
+    }
 }
 
 // 0x461170

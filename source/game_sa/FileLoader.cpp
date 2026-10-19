@@ -84,8 +84,8 @@ void CFileLoader::InjectHooks() {
     RH_ScopedInstall(LoadScene, 0x5B8700);
     RH_ScopedInstall(LoadObjectTypes, 0x5B8400);
 
-    RH_ScopedGlobalInstall(LinkLods, 0x5B51E0); 
-    RH_ScopedInstall(Load2dEffect, 0x5B7670, { .Reversed = false });
+    RH_ScopedGlobalInstall(LinkLods, 0x5B51E0);
+    RH_ScopedInstall(Load2dEffect, 0x5B7670);
 }
 
 // copy textures from dictionary to baseDictionary
@@ -963,12 +963,9 @@ int32 CFileLoader::LoadObject(const char* line) {
 
 // 0x5B7670
 void CFileLoader::Load2dEffect(const char* line) {
-    return plugin::Call<0x5B7670, const char*>(line);
-
-    // todo:
     auto modelId{ MODEL_INVALID };
     CVector pos{};
-    int32 type;
+    int32 type{};
     VERIFY(sscanf_s(line, "%d %f %f %f %d", &modelId, &pos.x, &pos.y, &pos.z, &type) == 5);
 
     CTxdStore::PushCurrentTxd();
@@ -977,30 +974,241 @@ void CFileLoader::Load2dEffect(const char* line) {
     auto& effect = CModelInfo::Get2dEffectStore()->AddItem();
     CModelInfo::GetModelInfo(modelId)->Add2dEffect(&effect);
     effect.m_Pos = pos;
-    effect.m_Type = *reinterpret_cast<e2dEffectType*>(type);
+    effect.m_Type = static_cast<e2dEffectType>(type);
 
     switch (type) {
-    case EFFECT_LIGHT:
+    case EFFECT_LIGHT: {
+        int32 dummy1, dummy5, r, g, b, a;
+        float dummy2, dummy3, dummy4;
+        sscanf_s(line, "%d %f %f %f %d %d %d %d %d",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5, &r, &g, &b, &a);
+
+        const char* p = line;
+        while (*p && *p != '"') p++;
+        if (*p == '"') p++;
+        char coronaTexName[32]{};
+        for (int32 i = 0; *p && *p != '"' && i < 31; ++i) {
+            coronaTexName[i] = *p++;
+        }
+        if (*p == '"') p++;
+        while (*p && *p != '"') p++;
+        if (*p == '"') p++;
+        char shadowTexName[32]{};
+        for (int32 i = 0; *p && *p != '"' && i < 31; ++i) {
+            shadowTexName[i] = *p++;
+        }
+        if (*p == '"') p++;
+
+        int32 flags, flashType, reflection, flareType, shadowColorMult, shadowZDist, offX, offY, offZ;
+        sscanf_s(p, "%f %f %f %f %d %d %d %d %d %d %d %d %d",
+            &effect.light.m_fCoronaFarClip,
+            &effect.light.m_fPointlightRange,
+            &effect.light.m_fCoronaSize,
+            &effect.light.m_fShadowSize,
+            &flags,
+            &flashType,
+            &reflection,
+            &flareType,
+            &shadowColorMult,
+            &shadowZDist,
+            &offX,
+            &offY,
+            &offZ);
+
+        effect.light.m_color = CRGBA((uint8)r, (uint8)g, (uint8)b, (uint8)a);
+        effect.light.m_nFlags = (uint16)flags;
+        effect.light.m_nCoronaFlashType = (e2dCoronaFlashType)flashType;
+        effect.light.m_bCoronaEnableReflection = (reflection != 0);
+        effect.light.m_nCoronaFlareType = (uint8)flareType;
+        effect.light.m_nShadowColorMultiplier = (uint8)shadowColorMult;
+        effect.light.m_nShadowZDistance = (char)shadowZDist;
+        effect.light.offsetX = (char)offX;
+        effect.light.offsetY = (char)offY;
+        effect.light.offsetZ = (char)offZ;
+
+        effect.light.m_pCoronaTex = coronaTexName[0] ? RwTextureRead(coronaTexName, nullptr) : nullptr;
+        effect.light.m_pShadowTex = shadowTexName[0] ? RwTextureRead(shadowTexName, nullptr) : nullptr;
+
+        if (effect.light.m_bWithoutCorona) {
+            effect.light.m_bCheckObstacles = false;
+        }
         break;
-    case EFFECT_PARTICLE:
+    }
+    case EFFECT_PARTICLE: {
+        int32 dummy1, dummy5;
+        float dummy2, dummy3, dummy4;
+        sscanf_s(line, "%d %f %f %f %d %23s",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            effect.particle.m_szName, (unsigned)sizeof(effect.particle.m_szName));
         break;
-    case EFFECT_ATTRACTOR:
+    }
+    case EFFECT_ATTRACTOR: {
+        int32 dummy1, dummy5, attractorType, prob, field_36;
+        float dummy2, dummy3, dummy4;
+        char scriptName[32]{};
+        sscanf_s(line, "%d %f %f %f %d %d %f %f %f %f %f %f %f %f %f %d %d %31s",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            &attractorType,
+            &effect.pedAttractor.m_vecQueueDir.x,
+            &effect.pedAttractor.m_vecQueueDir.y,
+            &effect.pedAttractor.m_vecQueueDir.z,
+            &effect.pedAttractor.m_vecUseDir.x,
+            &effect.pedAttractor.m_vecUseDir.y,
+            &effect.pedAttractor.m_vecUseDir.z,
+            &effect.pedAttractor.m_vecForwardDir.x,
+            &effect.pedAttractor.m_vecForwardDir.y,
+            &effect.pedAttractor.m_vecForwardDir.z,
+            &prob,
+            &field_36,
+            scriptName, (unsigned)sizeof(scriptName));
+
+        effect.pedAttractor.m_nAttractorType = (ePedAttractorType)attractorType;
+        effect.pedAttractor.m_nPedExistingProbability = (uint8)prob;
+        effect.pedAttractor.field_36 = (uint8)field_36;
+        strncpy_s(effect.pedAttractor.m_szScriptName, scriptName, sizeof(effect.pedAttractor.m_szScriptName));
         break;
-    case EFFECT_INTERIOR:
+    }
+    case EFFECT_INTERIOR: {
+        int32 dummy1, dummy5;
+        float dummy2, dummy3, dummy4;
+        int32 typeInt, group;
+        float w, d, h;
+        int32 door, lDoorStart, lDoorEnd, rDoorStart, rDoorEnd, tDoorStart, tDoorEnd;
+        int32 lWinStart, lWinEnd, rWinStart, rWinEnd, tWinStart, tWinEnd;
+        int32 noGoL[3], noGoB[3], noGoW[3], noGoD[3];
+        sscanf_s(line, "%d %f %f %f %d %d %f %f %f %f %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d  %d %d %d %d  %d %d %d %d  %d %d %d %d",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            &typeInt,
+            &effect.interior.m_rot,
+            &w, &d, &h,
+            &group,
+            &door, &lDoorStart, &lDoorEnd, &rDoorStart, &rDoorEnd, &tDoorStart, &tDoorEnd,
+            &lWinStart, &lWinEnd, &rWinStart, &rWinEnd, &tWinStart, &tWinEnd,
+            &noGoL[0], &noGoB[0], &noGoW[0], &noGoD[0],
+            &noGoL[1], &noGoB[1], &noGoW[1], &noGoD[1],
+            &noGoL[2], &noGoB[2], &noGoW[2], &noGoD[2]);
+
+        effect.interior.m_type = (uint8)typeInt;
+        effect.interior.m_groupId = (int8)group;
+        effect.interior.m_width = (uint8)std::floor(w);
+        effect.interior.m_depth = (uint8)std::floor(d);
+        effect.interior.m_height = (uint8)std::floor(h);
+        effect.interior.m_door = (int8)door;
+        effect.interior.m_lDoorStart = (int8)lDoorStart;
+        effect.interior.m_lDoorEnd = (int8)lDoorEnd;
+        effect.interior.m_rDoorStart = (int8)rDoorStart;
+        effect.interior.m_rDoorEnd = (int8)rDoorEnd;
+        effect.interior.m_tDoorStart = (int8)tDoorStart;
+        effect.interior.m_tDoorEnd = (int8)tDoorEnd;
+        effect.interior.m_lWindowStart = (int8)lWinStart;
+        effect.interior.m_lWindowEnd = (int8)lWinEnd;
+        effect.interior.m_rWindowStart = (int8)rWinStart;
+        effect.interior.m_rWindowEnd = (int8)rWinEnd;
+        effect.interior.m_tWindowStart = (int8)tWinStart;
+        effect.interior.m_tWindowEnd = (int8)tWinEnd;
+        for (int32 i = 0; i < 3; i++) {
+            effect.interior.m_noGoLeft[i] = (int8)noGoL[i];
+            effect.interior.m_noGoBottom[i] = (int8)noGoB[i];
+            effect.interior.m_noGoWidth[i] = (int8)noGoW[i];
+            effect.interior.m_noGoDepth[i] = (int8)noGoD[i];
+        }
         break;
-    case EFFECT_ENEX:
+    }
+    case EFFECT_ENEX: {
+        int32 dummy1, dummy5;
+        float dummy2, dummy3, dummy4;
+        int32 interiorId, flags1, skyColor;
+        char interiorName[32]{};
+        sscanf_s(line, "%d %f %f %f %d %f %f %f %f %f %f %f %d %d %31s %d",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            &effect.enEx.m_fEnterAngle,
+            &effect.enEx.m_vecRadius.x,
+            &effect.enEx.m_vecRadius.y,
+            &effect.enEx.m_vecExitPosn.x,
+            &effect.enEx.m_vecExitPosn.y,
+            &effect.enEx.m_vecExitPosn.z,
+            &effect.enEx.m_fExitAngle,
+            &interiorId,
+            &flags1,
+            interiorName, (unsigned)sizeof(interiorName),
+            &skyColor);
+
+        effect.enEx.m_nInteriorId = (eAreaCodesS16)interiorId;
+        effect.enEx.m_nFlags1 = (uint8)flags1;
+        effect.enEx.m_nSkyColor = (uint8)skyColor;
+        strncpy_s(effect.enEx.m_szInteriorName, interiorName, sizeof(effect.enEx.m_szInteriorName));
         break;
-    case EFFECT_ROADSIGN:
+    }
+    case EFFECT_ROADSIGN: {
+        int32 dummy1, dummy5;
+        float dummy2, dummy3, dummy4;
+        int32 flags;
+        char line1[32]{}, line2[32]{}, line3[32]{}, line4[32]{};
+        sscanf_s(line, "%d %f %f %f %d %f %f %f %f %f %d %31s %31s %31s %31s",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            &effect.roadsign.m_vecSize.x,
+            &effect.roadsign.m_vecSize.y,
+            &effect.roadsign.m_vecRotation.x,
+            &effect.roadsign.m_vecRotation.y,
+            &effect.roadsign.m_vecRotation.z,
+            &flags,
+            line1, (unsigned)sizeof(line1),
+            line2, (unsigned)sizeof(line2),
+            line3, (unsigned)sizeof(line3),
+            line4, (unsigned)sizeof(line4));
+
+        effect.roadsign.m_nFlags = *reinterpret_cast<CRoadsignAttrFlags*>(&flags);
+        char* text = (char*)CMemoryMgr::Malloc(64);
+        effect.roadsign.m_pText = text;
+        memset(text, ' ', 64);
+        memcpy(&text[0],  line1, std::min<size_t>(strlen(line1), 16));
+        memcpy(&text[16], line2, std::min<size_t>(strlen(line2), 16));
+        memcpy(&text[32], line3, std::min<size_t>(strlen(line3), 16));
+        memcpy(&text[48], line4, std::min<size_t>(strlen(line4), 16));
+        effect.roadsign.m_pAtomic = nullptr;
         break;
-    case EFFECT_TRIGGER_POINT:
+    }
+    case EFFECT_TRIGGER_POINT: {
+        int32 dummy1, dummy5;
+        float dummy2, dummy3, dummy4;
+        sscanf_s(line, "%d %f %f %f %d %d",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            &effect.slotMachineIndex.m_nId);
         break;
-    case EFFECT_COVER_POINT:
+    }
+    case EFFECT_COVER_POINT: {
+        int32 dummy1, dummy5, usage;
+        float dummy2, dummy3, dummy4;
+        sscanf_s(line, "%d %f %f %f %d %f %f %d",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            &effect.coverPoint.m_DirOfCover.x,
+            &effect.coverPoint.m_DirOfCover.y,
+            &usage);
+        effect.coverPoint.m_Usage = (CCoverPoint::eUsage)usage;
         break;
-    case EFFECT_ESCALATOR:
+    }
+    case EFFECT_ESCALATOR: {
+        int32 dummy1, dummy5, dir;
+        float dummy2, dummy3, dummy4;
+        sscanf_s(line, "%d %f %f %f %d %f %f %f %f %f %f %f %f %f %d",
+            &dummy1, &dummy2, &dummy3, &dummy4, &dummy5,
+            &effect.escalator.m_vecBottom.x,
+            &effect.escalator.m_vecBottom.y,
+            &effect.escalator.m_vecBottom.z,
+            &effect.escalator.m_vecTop.x,
+            &effect.escalator.m_vecTop.y,
+            &effect.escalator.m_vecTop.z,
+            &effect.escalator.m_vecEnd.x,
+            &effect.escalator.m_vecEnd.y,
+            &effect.escalator.m_vecEnd.z,
+            &dir);
+        effect.escalator.m_nDirection = (dir != 0) ? 1 : 0;
         break;
+    }
     default:
         break;
     }
+
     CTxdStore::PopCurrentTxd();
 }
 

@@ -20,7 +20,7 @@ void CClouds::InjectHooks() {
     RH_ScopedInstall(SetUpOneSkyPoly, 0x713060);
     RH_ScopedInstall(Render, 0x713950);
     RH_ScopedInstall(RenderSkyPolys, 0x714650);
-    RH_ScopedInstall(RenderBottomFromHeight, 0x7154B0, { .Reversed = false });
+    RH_ScopedInstall(RenderBottomFromHeight, 0x7154B0);
 
     // Moving fog
     RH_ScopedInstall(MovingFogInit, 0x713660);
@@ -859,21 +859,16 @@ void CClouds::RenderSkyPolys() {
 
 // 0x7154B0
 void CClouds::RenderBottomFromHeight() {
-    /****
-    * Code below should be good
-    * but it isn't complete...
-    *****\
-   
     const auto camPos = TheCamera.GetPosition();
-    if (camPos.z < -90.f) { // 0x71557D [Moved up here]
+    if (camPos.z < -90.f) {
         return;
     }
 
-    const auto& cc = CTimeCycle::m_CurrentColours; // cc = color component
+    const auto& cc = CTimeCycle::m_CurrentColours;
     const auto ClampClr = [](float clr) {
         return std::min(clr, 255.f);
     };
-    const auto fcClr = CRGBA{ // fc = fluffy clouds
+    const auto fcClr = CRGBA{
         (uint8)ClampClr(cc.m_nFluffyCloudsBottomRed * 2.f + 20.f),
         (uint8)ClampClr(cc.m_nFluffyCloudsBottomGreen * 1.5f),
         (uint8)ClampClr(cc.m_nFluffyCloudsBottomBlue * 1.5f),
@@ -881,19 +876,66 @@ void CClouds::RenderBottomFromHeight() {
     };
 
     auto lowZ = 160.f, highZ = 190.f;
+    float heightOffset = (camPos.z - 200.0f) * 0.3f;
+    if (heightOffset > 0.0f) {
+        lowZ += heightOffset;
+        highZ += heightOffset;
+    }
 
-    auto& windShift = StaticRef<float>(0xC6E954);
+    flt_C6E954 += CTimer::GetTimeStep() * CWeather::Wind * 0.005f;
 
-    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,      RWRSTATE(TRUE));
-    RwRenderStateSet(rwRENDERSTATEZTESTENABLE,       RWRSTATE(TRUE));
-    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(TRUE));
-    RwRenderStateSet(rwRENDERSTATEFOGENABLE,         RWRSTATE(TRUE));
-    RwRenderStateSet(rwRENDERSTATESRCBLEND,          RWRSTATE(rwBLENDSRCALPHA));
-    RwRenderStateSet(rwRENDERSTATEDESTBLEND,         RWRSTATE(rwBLENDINVSRCALPHA));
-    RwRenderStateSet(rwRENDERSTATETEXTURERASTER,     RWRSTATE(RwTextureGetRaster(gpCloudMaskTex)));
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,       RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE,        RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE,  RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE,          RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATESRCBLEND,           RWRSTATE(rwBLENDSRCALPHA));
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND,          RWRSTATE(rwBLENDINVSRCALPHA));
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER,      RWRSTATE(RwTextureGetRaster(gpCloudMaskTex)));
 
-    // TODO....
-    */
+    if (m_bVolumetricCloudHeightSwitch) {
+        static constexpr float CLOUD_X_POSITIONS[30] = {
+            54.0f, 105.0f, 203.0f, 65.0f, 213.0f, 154.0f, 169.0f, 54.0f, 76.0f, 10.0f,
+            119.0f, 204.0f, 176.0f, 154.0f, 132.0f, 190.0f, 200.0f, 37.0f, 193.0f, 154.0f,
+            71.0f, 111.0f, 234.0f, 12.0f, 195.0f, 165.0f, 104.0f, 94.0f, 23.0f, 222.0f
+        };
+        static constexpr float CLOUD_Y_POSITIONS[30] = {
+            100.0f, 50.0f, 156.0f, 123.0f, 232.0f, 12.0f, 76.0f, 203.0f, 164.0f, 120.0f,
+            64.0f, 164.0f, 94.0f, 195.0f, 125.0f, 71.0f, 243.0f, 123.0f, 176.0f, 65.0f,
+            132.0f, 54.0f, 94.0f, 12.0f, 234.0f, 167.0f, 165.0f, 200.0f, 100.0f, 40.0f
+        };
+
+        for (int32 i = 0; i < 30; i++) {
+            float windX = flt_C6E954 * 0.5f;
+            float posX = CLOUD_X_POSITIONS[i] + windX - camPos.x;
+            float posY = CLOUD_Y_POSITIONS[i] + windX - camPos.y;
+
+            posX = std::floor(posX);
+            posY = std::floor(posY);
+
+            float worldX = posX + camPos.x;
+            float worldY = posY + camPos.y;
+            float worldZ = lowZ + (float)(i % 5) * 5.0f;
+
+            float distZ = std::abs(camPos.z - worldZ);
+            float alpha = (1.0f - distZ * 0.004f) * (float)fcClr.a;
+            if (alpha > 0.0f) {
+                CSprite::RenderBufferedOneXLUSprite(
+                    worldX, worldY, worldZ,
+                    15.0f, 15.0f,
+                    fcClr.r, fcClr.g, fcClr.b,
+                    (int16)std::min(alpha, 255.0f),
+                    1.0f / 40.0f, 255
+                );
+            }
+        }
+    }
+
+    CSprite::FlushSpriteBuffer();
+
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RWRSTATE(nullptr));
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE,     RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,  RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE,   RWRSTATE(TRUE));
 }
 
 //

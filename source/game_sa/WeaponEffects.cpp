@@ -20,7 +20,7 @@ void CWeaponEffects::InjectHooks() {
     RH_ScopedInstall(ClearCrossHairs, 0x742C80);
     RH_ScopedInstall(ClearCrossHairImmediately, 0x742CA0);
     RH_ScopedInstall(ClearCrossHairsImmediately, 0x742CC0);
-    RH_ScopedInstall(Render, 0x742CF0, { .Reversed = false });
+    RH_ScopedInstall(Render, 0x742CF0);
 }
 
 // 0x742AB0
@@ -103,5 +103,102 @@ void CWeaponEffects::ClearCrossHairsImmediately() {
 void CWeaponEffects::Render() {
     ZoneScoped;
 
-    plugin::Call<0x742CF0>();
+    if (FrontEndMenuManager.m_bMenuActive) {
+        return;
+    }
+
+    for (size_t i = 0; i < gCrossHair.size(); i++) {
+        auto& crossHair = gCrossHair[i];
+        if (crossHair.m_nTimeWhenToDeactivate != 0 && (uint32)crossHair.m_nTimeWhenToDeactivate < CTimer::GetTimeInMS()) {
+            crossHair.m_bActive = false;
+            crossHair.m_nTimeWhenToDeactivate = 0;
+            crossHair.m_fRotation = 0.0f;
+        }
+
+        if (crossHair.m_nTimeWhenToDeactivate != -1) {
+            crossHair.m_fRotation = 0.0f;
+        }
+
+        CPed* player = FindPlayerPed((int32)i);
+        CEntity* target = player ? player->m_pTargetedObject : nullptr;
+        if (!target) {
+            crossHair.m_bActive = false;
+        }
+
+        if (!crossHair.m_bActive) {
+            continue;
+        }
+
+        if (crossHair.m_bClearImmediately) {
+            RwV3d screenPos{};
+            float szX{}, szY{};
+            if (CSprite::CalcScreenCoors(crossHair.m_vecPosn, &screenPos, &szX, &szY, true, true)) {
+                float invZ = 1.0f / screenPos.z;
+                if (invZ <= 1.0f) {
+                    szX *= invZ;
+                    szY *= invZ;
+                }
+
+                RwRenderStateSet(rwRENDERSTATEZTESTENABLE,      RWRSTATE(FALSE));
+                RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,     RWRSTATE(FALSE));
+                RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(TRUE));
+                RwRenderStateSet(rwRENDERSTATESRCBLEND,          RWRSTATE(rwBLENDSRCALPHA));
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND,         RWRSTATE(rwBLENDINVSRCALPHA));
+                RwRenderStateSet(rwRENDERSTATETEXTURERASTER,     RWRSTATE(RwTextureGetRaster(gpCrossHairTexFlight[0])));
+
+                static const float s_fScaleMult[2] = { 0.95f, 1.05f };
+                for (int32 j = 0; j < 2; j++) {
+                    float sX = std::max(1.0f, szX) * s_fScaleMult[j] * 0.04f;
+                    float sY = std::max(1.0f, szY) * s_fScaleMult[j] * 0.04f;
+                    CSprite::RenderOneXLUSprite(screenPos.x, screenPos.y, screenPos.z, sX, sY, 0, 0, 0, 255, 1.0f / 40.0f, 0, 255);
+                }
+
+                float sX = std::max(1.0f, szX) * 0.04f;
+                float sY = std::max(1.0f, szY) * 0.04f;
+                CSprite::RenderOneXLUSprite(screenPos.x, screenPos.y, screenPos.z, sX, sY, crossHair.m_color.r, crossHair.m_color.g, crossHair.m_color.b, crossHair.m_color.a, 1.0f / 40.0f, 0, 255);
+
+                RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RWRSTATE(RwTextureGetRaster(gpCrossHairTexFlight[1])));
+
+                float angle = (float)(CTimer::GetTimeInMS() & 0x3FF) * (2.0f * PI / 1024.0f);
+                crossHair.m_fRotation -= 1.0f * angle;
+                if (crossHair.m_fRotation <= 0.0f) {
+                    crossHair.m_fRotation = 0.0f;
+                }
+                crossHair.field_1C = (crossHair.m_fRotation > 0.0f) ? 1 : 0;
+
+                float sinA = std::sin(angle) * crossHair.m_fRotation;
+                float cosA = std::cos(angle) * crossHair.m_fRotation;
+
+                for (int32 j = 0; j < 2; j++) {
+                    float ssX = std::max(1.0f, szX) * s_fScaleMult[j] * 0.02f;
+                    float ssY = std::max(1.0f, szY) * s_fScaleMult[j] * 0.02f;
+                    CSprite::RenderOneXLUSprite(screenPos.x - cosA, screenPos.y - sinA, screenPos.z, ssX, ssY, 0, 0, 0, 255, 1.0f / 40.0f, 0, 255);
+                }
+
+                float ssX = std::max(1.0f, szX) * 0.02f;
+                float ssY = std::max(1.0f, szY) * 0.02f;
+                CSprite::RenderOneXLUSprite(screenPos.x - cosA, screenPos.y - sinA, screenPos.z, ssX, ssY, crossHair.m_color.r, crossHair.m_color.g, crossHair.m_color.b, 255, 1.0f / 40.0f, 0, 255);
+            }
+        } else {
+            RwRenderStateSet(rwRENDERSTATEZTESTENABLE,      RWRSTATE(FALSE));
+            RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,     RWRSTATE(FALSE));
+            RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(TRUE));
+            RwRenderStateSet(rwRENDERSTATETEXTURERASTER,     RWRSTATE(nullptr));
+
+            RwV3d screenPos{};
+            float szX{}, szY{};
+            if (CSprite::CalcScreenCoors(crossHair.m_vecPosn, &screenPos, &szX, &szY, false, false)) {
+                if (screenPos.x >= 0.0f && screenPos.x <= (float)RsGlobal.maximumWidth &&
+                    screenPos.y >= 0.0f && screenPos.y <= (float)RsGlobal.maximumHeight)
+                {
+                    float size = std::clamp(crossHair.m_fSize, 0.3f, 1.2f);
+                    crossHair.m_fSize = size;
+                }
+            }
+        }
+    }
+
+    for (int32 p = 0; p < 2; p++) {
+        FindPlayerInfo(p).RenderWeaponTargeting(p);
+    }
 }

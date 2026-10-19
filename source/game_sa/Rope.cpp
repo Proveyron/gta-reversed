@@ -13,7 +13,7 @@ void CRope::InjectHooks() {
     RH_ScopedInstall(Remove, 0x556780);
     RH_ScopedInstall(Render, 0x556800);
     RH_ScopedInstall(PickUpObject, 0x5569C0);
-    RH_ScopedInstall(Update, 0x557530, { .Reversed = false });
+    RH_ScopedInstall(Update, 0x557530);
 }
 
 // inlined see 0x557959
@@ -248,5 +248,72 @@ void CRope::PickUpObject(CEntity* obj) {
 
 // 0x557530
 void CRope::Update() {
-    plugin::CallMethod<0x557530, CRope*>(this);
+    float timeStep = CTimer::GetTimeStep();
+    CVector camPos = TheCamera.GetPosition();
+    if ((camPos - m_aSegments[0]).Magnitude2D() > 150.0f) {
+        return;
+    }
+
+    if (!(m_nFlags1 & 1)) {
+        if (CTimer::GetTimeInMS() > m_nTime) {
+            m_aSpeed[0].z -= timeStep * 0.008f;
+            m_aSegments[0] += m_aSpeed[0] * timeStep;
+        }
+    }
+
+    if (m_nFlags1 & 4) {
+        if ((CTimer::m_FrameCounter & 7) == 2) {
+            m_fGroundZ = CWorld::FindGroundZForCoord(m_aSegments[0].x, m_aSegments[0].y);
+        }
+        if (m_pAttachedEntity) {
+            if (m_pAttachedEntity->IsVehicle() || m_pAttachedEntity->m_nModelIndex == ModelIndices::MI_CAR_WRECK1) {
+                m_fGroundZ = m_pRopeAttachObject->GetPosition().z - 0.5f;
+            }
+        }
+    }
+
+    float damping = 1.0f - timeStep * 0.05f;
+    for (uint32 i = m_nSegments + 1; i < NUM_ROPE_SEGMENTS; i++) {
+        float jitterX = (float)((CGeneral::GetRandomNumber() & 0xF) - 8) * 0.001f;
+        float jitterY = (float)((CGeneral::GetRandomNumber() & 0xF) - 8) * 0.001f;
+        m_aSpeed[i].x += jitterX;
+        m_aSpeed[i].y += jitterY;
+
+        m_aSpeed[i].z -= timeStep * 0.008f;
+        if (m_nFlags1 & 4) {
+            if (m_aSegments[i].z < m_fGroundZ + 0.3f) {
+                m_aSegments[i].z = m_fGroundZ + 0.3f;
+            }
+        }
+
+        m_aSegments[i] += m_aSpeed[i] * timeStep;
+        m_aSpeed[i] *= damping;
+    }
+
+    if (DoControlsApply()) {
+        CPad* pad = CPad::GetPad(0);
+        float stickY = (float)pad->GetRightStickY() * (1.0f / 128.0f);
+        if (std::abs(stickY) > 0.05f) {
+            m_fTotalLength += stickY * timeStep * 0.1f;
+            if (m_fTotalLength < 5.0f) {
+                m_fTotalLength = 5.0f;
+            } else if (m_fTotalLength > 60.0f) {
+                m_fTotalLength = 60.0f;
+            }
+        }
+    }
+
+    CEntity* entityToUpdate = m_pAttachedEntity ? m_pAttachedEntity : m_pRopeAttachObject;
+    if (entityToUpdate) {
+        CVector attachPos = entityToUpdate->GetPosition();
+        CVector newPos{};
+        if (UpdateWeightInRope(attachPos.x, attachPos.y, attachPos.z, 0, &newPos.x)) {
+            entityToUpdate->SetPosition(newPos);
+        }
+    }
+
+    if (m_aSegments[0].z < -100.0f) {
+        Remove();
+    }
+    m_nFlags1 &= ~1;
 }

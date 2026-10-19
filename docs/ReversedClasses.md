@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 18:43:36 UTC
+Last update was at Oct 19, 2026 at 19:07:36 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7596 out of 8295 functions done in 719 categories)
+## Stats (7602 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (634/719) [88%]
+#### Completely reversed categories (640/719) [89%]
 
 <details>
 <summary>See list of categories</summary>
@@ -36,8 +36,10 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 - IKChain_c (20)<br />
 - CCheckpoint (1)<br />
 - CCheckpoints (8)<br />
+- CWeaponEffects (9)<br />
 - CPedList (7)<br />
 - CBouncingPanel (3)<br />
+- CRope (7)<br />
 - CRopes (11)<br />
 - CWeaponInfo (10)<br />
 - CCurrentVehicle (2)<br />
@@ -49,6 +51,7 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 - CPedPlacement (3)<br />
 - CWindModifiers (2)<br />
 - C_PcSave (5)<br />
+- CFileLoader (48)<br />
 - CWorld (95)<br />
 - CStreamingInfo (7)<br />
 - CStreaming (94)<br />
@@ -125,6 +128,7 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 - CColourSet (2)<br />
 - CSkidmarks (7)<br />
 - CMovingThings (5)<br />
+- CRoadBlocks (8)<br />
 - CBridge (4)<br />
 - CCranes (5)<br />
 - CGridRef (5)<br />
@@ -136,6 +140,7 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 - CFallingGlassPane (2)<br />
 - CGlass (19)<br />
 - CClock (9)<br />
+- CClouds (21)<br />
 - CCoronas (11)<br />
 - CRegisteredCorona (1)<br />
 - CCustomCarPlateMgr (15)<br />
@@ -474,6 +479,7 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 - CTaskComplexWanderCop (9)<br />
 - CTaskSimpleStandStill (3)<br />
 - CTaskComplexPartnerChat (1)<br />
+- CTaskSimpleUseGun (19)<br />
 - CTaskComplexObserveTrafficLightsAndAchieveHeading (5)<br />
 - CTaskSimpleInAir (4)<br />
 - CTaskSimplePlayerOnFoot (12)<br />
@@ -651,16 +657,13 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 
 </details>
 
-#### Partially reversed categories (80/719) [11%]
+#### Partially reversed categories (74/719) [10%]
 
 <details>
 <summary>See list of categories</summary>
 - CPedGroupPlacer (1/4) [25%]<br />
 - CInterestingEvents (2/7) [29%]<br />
-- CWeaponEffects (8/9) [89%]<br />
-- CRope (6/7) [86%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
-- CFileLoader (47/48) [98%]<br />
 - CClothesBuilder (15/23) [65%]<br />
 - CPopulation (64/66) [97%]<br />
 - CPedDamageResponseCalculator (2/7) [29%]<br />
@@ -675,9 +678,7 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 - CFont (32/36) [89%]<br />
 - CCamera (97/114) [85%]<br />
 - CGangWars (32/35) [91%]<br />
-- CRoadBlocks (7/8) [88%]<br />
 - CPedGroups (2/11) [18%]<br />
-- CClouds (20/21) [95%]<br />
 - CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
 - CPathFind (54/62) [87%]<br />
@@ -710,7 +711,6 @@ Last update was at Oct 19, 2026 at 18:43:36 UTC
 - CTaskComplexSmartFleePoint (2/12) [17%]<br />
 - CTaskComplexWaitForBus (2/7) [29%]<br />
 - CTaskSimpleCarDrive (7/13) [54%]<br />
-- CTaskSimpleUseGun (18/19) [95%]<br />
 - CTaskComplexFollowLeaderInFormation (1/7) [14%]<br />
 - CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
