@@ -40297,17 +40297,17 @@
     {
         "Category": "FurnitureSubGroup_c",
         "Name": "GetFurniture",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "FurnitureSubGroup_c",
         "Name": "GetRandomId",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "FurnitureSubGroup_c",
         "Name": "AddFurniture",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "Interior_c",

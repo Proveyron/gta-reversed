@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:30:58 UTC
+Last update was at Oct 19, 2026 at 15:35:15 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7539 out of 8295 functions done in 719 categories)
+## Stats (7542 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (590/719) [82%]
+#### Completely reversed categories (591/719) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -600,6 +600,7 @@ Last update was at Oct 19, 2026 at 15:30:58 UTC
 - CTrailer (13)<br />
 - FurnitureGroup_c (6)<br />
 - FurnitureManager_c (7)<br />
+- FurnitureSubGroup_c (3)<br />
 - InteriorManager_c (21)<br />
 - CTheScripts (69)<br />
 - CStreamedScripts (12)<br />
@@ -735,7 +736,7 @@ Last update was at Oct 19, 2026 at 15:30:58 UTC
 
 </details>
 
-#### Not-at-all reversed categories (8/719) [1%]
+#### Not-at-all reversed categories (7/719) [1.0%]
 
 <details>
 <summary>See list of categories</summary>
@@ -744,7 +745,6 @@ Last update was at Oct 19, 2026 at 15:30:58 UTC
 - CTaskSimpleFight (5)<br />
 - CDecisionMakerTypes (8)<br />
 - CConversationForPed (2)<br />
-- FurnitureSubGroup_c (3)<br />
 - Interior_c (52)<br />
 - CMemoryMgr (7)<br />
 
