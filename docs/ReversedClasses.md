@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:39:09 UTC
+Last update was at Oct 19, 2026 at 15:42:06 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7543 out of 8295 functions done in 719 categories)
+## Stats (7544 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (592/719) [82%]
+#### Completely reversed categories (593/719) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -274,6 +274,7 @@ Last update was at Oct 19, 2026 at 15:39:09 UTC
 - CNodeRoute (2)<br />
 - CKeyGen (4)<br />
 - CModelInfo (28)<br />
+- CBaseModelInfo (34)<br />
 - CAtomicModelInfo (9)<br />
 - CLodAtomicModelInfo (3)<br />
 - CLinkedUpgradeList (2)<br />
@@ -609,7 +610,7 @@ Last update was at Oct 19, 2026 at 15:39:09 UTC
 
 </details>
 
-#### Partially reversed categories (120/719) [17%]
+#### Partially reversed categories (119/719) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -667,7 +668,6 @@ Last update was at Oct 19, 2026 at 15:39:09 UTC
 - CPhysical (54/56) [96%]<br />
 - CGroupEventHandler (30/32) [94%]<br />
 - CEventHandler (69/72) [96%]<br />
-- CBaseModelInfo (33/34) [97%]<br />
 - CPedGroupDefaultTaskAllocatorSitInLeaderCar (1/2) [50%]<br />
 - CPedGroupDefaultTaskAllocatorRandom (1/2) [50%]<br />
 - CTaskAllocatorKillThreatsBasic (5/6) [83%]<br />

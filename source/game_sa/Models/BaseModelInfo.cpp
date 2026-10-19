@@ -45,8 +45,8 @@ void CBaseModelInfo::InjectHooks() {
 
     RH_ScopedInstall(IsBreakableStatuePart, 0x59F090);
     RH_ScopedInstall(IsTagModel, 0x49CC20);
-    // Hooking SwaysInWind function causes side effects
-    RH_ScopedInstall(SwaysInWind, 0x4212C0, { .Reversed = false });
+    // Hooking SwaysInWind function causes side effects in ASI mode, keep unhooked at runtime
+    RH_ScopedInstall(SwaysInWind, 0x4212C0, { .Unhooked = true });
 
     RH_ScopedInstall(SetBaseModelInfoFlags, 0x5B3AD0);
 }

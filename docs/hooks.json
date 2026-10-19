@@ -22282,7 +22282,7 @@
     {
         "Category": "CBaseModelInfo",
         "Name": "SwaysInWind",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CBaseModelInfo",
