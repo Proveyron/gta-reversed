@@ -60,9 +60,9 @@ void CPools::InjectHooks() {
     RH_ScopedInstall(LoadVehiclePool, 0x5D2A20);
     RH_ScopedInstall(MakeSureSlotInObjectPoolIsEmpty, 0x550080);
     RH_ScopedInstall(Save, 0x5D0880);
-    RH_ScopedInstall(SaveObjectPool, 0x5D4940, { .Reversed = false });
-    RH_ScopedInstall(SavePedPool, 0x5D4B40, { .Reversed = false });
-    RH_ScopedInstall(SaveVehiclePool, 0x5D4800, { .Reversed = false });
+    RH_ScopedInstall(SaveObjectPool, 0x5D4940);
+    RH_ScopedInstall(SavePedPool, 0x5D4B40);
+    RH_ScopedInstall(SaveVehiclePool, 0x5D4800);
 }
 
 // 0x550F10
@@ -305,18 +305,95 @@ bool CPools::Save() {
 
 // 0x5D4940
 bool CPools::SaveObjectPool() {
-    return plugin::CallAndReturn<bool, 0x5D4940>();
+    int32 count = 0;
+    for (auto& obj : GetObjectPool()->GetAllValid()) {
+        if (obj.m_nObjectType == OBJECT_MISSION) {
+            count++;
+        }
+    }
+
+    CGenericGameStorage::SaveDataToWorkBuffer(&count, 4);
+
+    for (auto& obj : GetObjectPool()->GetAllValid()) {
+        if (obj.m_nObjectType == OBJECT_MISSION) {
+            int32 ref = GetObjectRef(&obj);
+            int32 model = obj.m_nModelIndex;
+
+            CGenericGameStorage::SaveDataToWorkBuffer(&ref, 4);
+            CGenericGameStorage::SaveDataToWorkBuffer(&model, 4);
+            obj.Save();
+        }
+    }
+
+    return true;
 }
 
 // 0x5D4B40
 bool CPools::SavePedPool() {
-    return plugin::CallAndReturn<bool, 0x5D4B40>();
+    int32 count = 0;
+    for (auto& ped : GetPedPool()->GetAllValid()) {
+        if (!ped.bInVehicle && ped.m_nPedType == PED_TYPE_PLAYER1) {
+            count++;
+        }
+    }
+
+    CGenericGameStorage::SaveDataToWorkBuffer(&count, 4);
+
+    for (auto& ped : GetPedPool()->GetAllValid()) {
+        if (!ped.bInVehicle && ped.m_nPedType == PED_TYPE_PLAYER1) {
+            int32 ref = GetPedRef(&ped);
+            int32 model = ped.m_nModelIndex;
+            int32 pedType = ped.m_nPedType;
+
+            CGenericGameStorage::SaveDataToWorkBuffer(&ref, 4);
+            CGenericGameStorage::SaveDataToWorkBuffer(&model, 4);
+            CGenericGameStorage::SaveDataToWorkBuffer(&pedType, 4);
+            ped.Save();
+        }
+    }
+
+    return true;
 }
 
 // 0x5D4800
 // Used in CPools::Save (Android 1.0)
 bool CPools::SaveVehiclePool() {
-    return plugin::CallAndReturn<bool, 0x5D4800>();
+    auto CanSaveVehicle = [](CVehicle* vehicle) {
+        if (vehicle->m_nCreatedBy != MISSION_VEHICLE) {
+            return false;
+        }
+        if (vehicle->m_pDriver) {
+            return false;
+        }
+        for (auto pass : vehicle->m_apPassengers) {
+            if (pass) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    int32 count = 0;
+    for (auto& vehicle : GetVehiclePool()->GetAllValid()) {
+        if (CanSaveVehicle(&vehicle)) {
+            count++;
+        }
+    }
+
+    CGenericGameStorage::SaveDataToWorkBuffer(&count, 4);
+
+    for (auto& vehicle : GetVehiclePool()->GetAllValid()) {
+        if (CanSaveVehicle(&vehicle)) {
+            int32 ref = GetVehicleRef(&vehicle);
+            int32 model = vehicle.m_nModelIndex;
+
+            CGenericGameStorage::SaveDataToWorkBuffer(&ref, 4);
+            CGenericGameStorage::SaveDataToWorkBuffer(&model, 4);
+            vehicle.Save();
+        }
+    }
+
+    return true;
 }
 
 // 0x404550

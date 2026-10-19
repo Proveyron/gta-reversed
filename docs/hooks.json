@@ -642,17 +642,17 @@
     {
         "Category": "CPedGroupPlacer",
         "Name": "PlaceFormationGroup",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPedGroupPlacer",
         "Name": "PlaceChatGroup",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPedGroupPlacer",
         "Name": "PlaceRandomGroup",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPedGroupPlacer",
@@ -16267,17 +16267,17 @@
     {
         "Category": "CPools",
         "Name": "SaveObjectPool",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPools",
         "Name": "SavePedPool",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPools",
         "Name": "SaveVehiclePool",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "Securom",

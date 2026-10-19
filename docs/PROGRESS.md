@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 20:56:58 UTC
+Last update was at Oct 19, 2026 at 21:06:24 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7616 out of 8295 functions done in 719 categories)
+## Stats (7622 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (647/719) [90%]
+#### Completely reversed categories (649/719) [90%]
 
 <details>
 <summary>See list of categories</summary>
@@ -20,6 +20,7 @@ Last update was at Oct 19, 2026 at 20:56:58 UTC
 - CHandShaker (3)<br />
 - CCutsceneMgr (35)<br />
 - CFileMgr (17)<br />
+- CPedGroupPlacer (4)<br />
 - CLoadedCarGroup (8)<br />
 - RenderBuffer (4)<br />
 - CPedGroup (12)<br />
@@ -187,6 +188,7 @@ Last update was at Oct 19, 2026 at 20:56:58 UTC
 - CPickups (37)<br />
 - CPedIK (9)<br />
 - CCustomBuildingPipeline (7)<br />
+- CPools (19)<br />
 - Securom (2)<br />
 - Rs (27)<br />
 - VideoMode (4)<br />
@@ -664,11 +666,10 @@ Last update was at Oct 19, 2026 at 20:56:58 UTC
 
 </details>
 
-#### Partially reversed categories (67/719) [9%]
+#### Partially reversed categories (65/719) [9%]
 
 <details>
 <summary>See list of categories</summary>
-- CPedGroupPlacer (1/4) [25%]<br />
 - CInterestingEvents (2/7) [29%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
 - CClothesBuilder (15/23) [65%]<br />
@@ -691,7 +692,6 @@ Last update was at Oct 19, 2026 at 20:56:58 UTC
 - CPedGeometryAnalyser (9/38) [24%]<br />
 - CCustomBuildingRenderer (3/7) [43%]<br />
 - CProjectileInfo (1/12) [8%]<br />
-- CPools (16/19) [84%]<br />
 - CShadows (21/31) [68%]<br />
 - CCam (20/45) [44%]<br />
 - FxSystem_c (31/35) [89%]<br />
