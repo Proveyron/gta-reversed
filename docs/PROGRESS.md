@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 22:29:20 UTC
+Last update was at Oct 19, 2026 at 22:56:16 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7657 out of 8295 functions done in 719 categories)
+## Stats (7659 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (659/719) [92%]
+#### Completely reversed categories (660/719) [92%]
 
 <details>
 <summary>See list of categories</summary>
@@ -125,6 +125,7 @@ Last update was at Oct 19, 2026 at 22:29:20 UTC
 - CStuckCarCheck (8)<br />
 - CUpsideDownCarCheck (5)<br />
 - CMessages (28)<br />
+- CGangWars (35)<br />
 - CPlayerPedData (5)<br />
 - CTimeCycle (20)<br />
 - CColourSet (2)<br />
@@ -676,7 +677,7 @@ Last update was at Oct 19, 2026 at 22:29:20 UTC
 
 </details>
 
-#### Partially reversed categories (55/719) [8%]
+#### Partially reversed categories (54/719) [8%]
 
 <details>
 <summary>See list of categories</summary>
@@ -694,7 +695,6 @@ Last update was at Oct 19, 2026 at 22:29:20 UTC
 - CStencilShadows (9/13) [69%]<br />
 - CFont (32/36) [89%]<br />
 - CCamera (97/114) [85%]<br />
-- CGangWars (33/35) [94%]<br />
 - CPedGroups (2/11) [18%]<br />
 - CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
