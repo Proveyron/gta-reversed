@@ -30,7 +30,7 @@ void CTaskSimplePlayerOnFoot::InjectHooks() {
 
     RH_ScopedInstall(ProcessPlayerWeapon, 0x6859A0);
     RH_ScopedInstall(PlayIdleAnimations, 0x6872C0);
-    RH_ScopedInstall(PlayerControlFighter, 0x687530, {.Reversed = false});
+    RH_ScopedInstall(PlayerControlFighter, 0x687530);
     RH_ScopedInstall(PlayerControlZelda, 0x6883D0);
 
     RH_ScopedVMTInstall(Clone, 0x68AFF0);
@@ -760,7 +760,162 @@ void CTaskSimplePlayerOnFoot::PlayIdleAnimations(CPlayerPed* player) {
 
 // 0x687530
 void CTaskSimplePlayerOnFoot::PlayerControlFighter(CPlayerPed* player) {
-    plugin::CallMethod<0x687530, CTaskSimplePlayerOnFoot*, CPlayerPed*>(this, player);
+    auto* taskFight = player->GetIntelligence()->GetTaskFighting();
+    if (!taskFight) {
+        return;
+    }
+
+    const auto& activeWeapon = player->GetActiveWeapon();
+    const auto* weaponInfo = &activeWeapon.GetWeaponInfo(player);
+    const bool isArmed = weaponInfo->m_nWeaponFire != 0;
+
+    CPad* pad = player->GetPadFromPlayer();
+    CVector2D moveSpeed{
+        (float)pad->GetPedWalkLeftRight() / 128.0f,
+        (float)pad->GetPedWalkUpDown() / 128.0f
+    };
+
+    const float timeStep = CTimer::ms_fTimeStep * 0.07f;
+
+    if (CGameLogic::IsPlayerUse2PlayerControls(player)) {
+        float moveBlendRatio = std::hypot(moveSpeed.x, moveSpeed.y);
+        if (moveBlendRatio > 0.0f) {
+            float angle = CGeneral::GetRadianAngleBetweenPoints(0.0f, 0.0f, -moveSpeed.x, moveSpeed.y) - TheCamera.m_fOrientation;
+            float limitedAngle = CGeneral::LimitRadianAngle(angle);
+            float negSin = -std::sin(limitedAngle);
+            float cosA = std::cos(limitedAngle);
+
+            if (CGameLogic::IsPlayerAllowedToGoInThisDirection(player, { negSin, cosA, 0.0f }, 0.0f)) {
+                CMatrix* mat = player->m_matrix;
+                moveSpeed.x = (cosA * mat->GetRight().y + negSin * mat->GetRight().x) * moveBlendRatio;
+                moveSpeed.y = -(cosA * mat->GetForward().y + negSin * mat->GetForward().x) * moveBlendRatio;
+            } else {
+                moveSpeed = { 0.0f, 0.0f };
+            }
+        }
+    } else if (player->m_pTargetedObject || (TheCamera.m_bUseMouse3rdPerson && pad->GetTarget())) {
+        float moveBlendRatio = std::hypot(moveSpeed.x, moveSpeed.y);
+        if (moveBlendRatio > 0.0f) {
+            if (moveBlendRatio > 1.0f) {
+                moveBlendRatio = 1.0f;
+            }
+            float angle = CGeneral::GetRadianAngleBetweenPoints(0.0f, 0.0f, -moveSpeed.x, moveSpeed.y) - TheCamera.m_fOrientation;
+            float limitedAngle = CGeneral::LimitRadianAngle(angle);
+            float negSin = -std::sin(limitedAngle);
+            float cosA = std::cos(limitedAngle);
+
+            CMatrix* mat = player->m_matrix;
+            moveSpeed.x = (cosA * mat->GetRight().y + negSin * mat->GetRight().x) * moveBlendRatio;
+            moveSpeed.y = -(cosA * mat->GetForward().y + negSin * mat->GetForward().x) * moveBlendRatio;
+        }
+    }
+
+    if (player->m_pTargetedObject || (TheCamera.m_bUseMouse3rdPerson && pad->GetTarget())) {
+        auto* playerData = player->m_pPlayerData;
+
+        float diffY = moveSpeed.y - playerData->m_vecFightMovement.y;
+        if (std::abs(diffY) > timeStep) {
+            playerData->m_vecFightMovement.y += (diffY > 0.0f ? timeStep : -timeStep);
+        } else {
+            playerData->m_vecFightMovement.y = moveSpeed.y;
+        }
+
+        float diffX = moveSpeed.x - playerData->m_vecFightMovement.x;
+        if (std::abs(diffX) > timeStep) {
+            playerData->m_vecFightMovement.x += (diffX > 0.0f ? timeStep : -timeStep);
+        } else {
+            playerData->m_vecFightMovement.x = moveSpeed.x;
+        }
+
+        bool bTargetClose = false;
+        if (player->m_pTargetedObject) {
+            CVector targetPos = player->m_pTargetedObject->GetPosition();
+            CVector myPos = player->GetPosition();
+            if (DistanceBetweenPointsSquared(targetPos, myPos) <= 16.0f) {
+                bTargetClose = true;
+            }
+        }
+
+        if (bTargetClose && taskFight->m_nFightState < 11) {
+            if (pad->GetSprint()) {
+                taskFight->ControlFight(nullptr, 0x11);
+                return;
+            }
+        } else if (pad->GetSprint() || isArmed) {
+            if (pad->GetSprint()) {
+                taskFight->ControlFight(nullptr, 0x11);
+                return;
+            }
+        }
+
+        if (moveSpeed.y > -0.5f) {
+            taskFight->ControlFight(nullptr, 0x0F);
+            return;
+        } else {
+            taskFight->ControlFight(nullptr, 0x10);
+            return;
+        }
+    } else {
+        float moveAngle = CGeneral::GetRadianAngleBetweenPoints(0.0f, 0.0f, -moveSpeed.x, moveSpeed.y);
+        float moveMag = std::hypot(moveSpeed.x, moveSpeed.y);
+        if (moveMag > 1.0f) {
+            moveMag = 1.0f;
+        }
+
+        auto* playerData = player->m_pPlayerData;
+        if (moveMag > 0.0f) {
+            float targetY = -moveMag;
+            float diffY = targetY - playerData->m_vecFightMovement.y;
+            if (std::abs(diffY) > timeStep) {
+                playerData->m_vecFightMovement.y += (diffY > 0.0f ? timeStep : -timeStep);
+            } else {
+                playerData->m_vecFightMovement.y = targetY;
+            }
+            playerData->m_vecFightMovement.x = 0.0f;
+            player->m_fAimingRotation = CGeneral::LimitRadianAngle(moveAngle - TheCamera.m_fOrientation);
+        } else {
+            playerData->m_vecFightMovement = { 0.0f, 0.0f };
+        }
+
+        if (moveSpeed.y < 0.0f && taskFight->m_nFightState < 11) {
+            dword_14 += (uint32)(CTimer::ms_fTimeStepNonClipped * 20.0f);
+        } else {
+            dword_14 = 0;
+        }
+
+        if (!pad->GetSprint() && !pad->GetDuck() && !isArmed && moveSpeed.y < 0.0f && dword_14 >= 2000) {
+            // Keep walking backwards
+        } else {
+            uint8 dodgeCmd = (std::hypot(moveSpeed.x, moveSpeed.y) > 0.5f ? 0x10 : 0x0F);
+            if (pad->DuckJustDown() && CTaskSimpleDuck::CanPedDuck(player)) {
+                player->GetIntelligence()->SetTaskDuckSecondary(0);
+                taskFight->ControlFight(nullptr, 0x12);
+                return;
+            } else if (dodgeCmd > 0) {
+                taskFight->ControlFight(nullptr, dodgeCmd);
+                return;
+            }
+        }
+    }
+
+    auto* playerData = player->m_pPlayerData;
+    if (std::abs(playerData->m_vecFightMovement.y) > 0.0f && std::abs(playerData->m_vecFightMovement.y) >= std::abs(playerData->m_vecFightMovement.x)) {
+        if (playerData->m_vecFightMovement.y < 0.0f) {
+            taskFight->ControlFight(nullptr, 3);
+            return;
+        } else {
+            taskFight->ControlFight(nullptr, 5);
+            return;
+        }
+    } else if (std::abs(playerData->m_vecFightMovement.x) > 0.0f) {
+        if (playerData->m_vecFightMovement.x > 0.0f) {
+            taskFight->ControlFight(nullptr, 6);
+            return;
+        } else {
+            taskFight->ControlFight(nullptr, 4);
+            return;
+        }
+    }
 }
 
 // 0x687C20

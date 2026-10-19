@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 17:09:41 UTC
+Last update was at Oct 19, 2026 at 17:41:41 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7568 out of 8295 functions done in 719 categories)
+## Stats (7579 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (617/719) [86%]
+#### Completely reversed categories (625/719) [87%]
 
 <details>
 <summary>See list of categories</summary>
@@ -22,7 +22,9 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 - CFileMgr (17)<br />
 - CLoadedCarGroup (8)<br />
 - RenderBuffer (4)<br />
+- CPedGroup (12)<br />
 - CPedGroupMembership (18)<br />
+- CPopCycle (15)<br />
 - RwHelper (24)<br />
 - CPad (76)<br />
 - CEscalator (5)<br />
@@ -34,6 +36,7 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 - IKChain_c (20)<br />
 - CCheckpoint (1)<br />
 - CCheckpoints (8)<br />
+- CPedList (7)<br />
 - CBouncingPanel (3)<br />
 - CWeaponInfo (10)<br />
 - CCurrentVehicle (2)<br />
@@ -83,6 +86,8 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 - CCompressedMatrixNotAligned (2)<br />
 - CVisibilityPlugins (84)<br />
 - CPedIntelligence (52)<br />
+- CPedGroupIntelligence (27)<br />
+- CCollision (61)<br />
 - CTrafficLights (12)<br />
 - CMotionBlurStreaks (4)<br />
 - CRegisteredMotionBlurStreak (2)<br />
@@ -466,6 +471,7 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 - CTaskComplexPartnerChat (1)<br />
 - CTaskComplexObserveTrafficLightsAndAchieveHeading (5)<br />
 - CTaskSimpleInAir (4)<br />
+- CTaskSimplePlayerOnFoot (12)<br />
 - CTaskComplexFollowPedFootsteps (1)<br />
 - CTaskComplexGetUpAndStandStill (5)<br />
 - CTaskSimpleDie (7)<br />
@@ -604,6 +610,8 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 - CAEWaterCannonAudioEntity (7)<br />
 - CAEWeatherAudioEntity (5)<br />
 - CAEAudioChannel (12)<br />
+- CAEAudioHardware (55)<br />
+- CAEStaticChannel (8)<br />
 - CAEBankLoader (6)<br />
 - CAEDataStream (20)<br />
 - CAEStreamTransformer (2)<br />
@@ -634,24 +642,19 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 
 </details>
 
-#### Partially reversed categories (96/719) [13%]
+#### Partially reversed categories (88/719) [12%]
 
 <details>
 <summary>See list of categories</summary>
 - CPedGroupPlacer (1/4) [25%]<br />
-- CPedGroup (10/12) [83%]<br />
-- CPopCycle (14/15) [93%]<br />
 - CInterestingEvents (2/7) [29%]<br />
 - CWeaponEffects (8/9) [89%]<br />
-- CPedList (5/7) [71%]<br />
 - CRope (5/7) [71%]<br />
 - CRopes (9/11) [82%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
 - CFileLoader (47/48) [98%]<br />
 - CClothesBuilder (15/23) [65%]<br />
 - CPopulation (64/66) [97%]<br />
-- CPedGroupIntelligence (26/27) [96%]<br />
-- CCollision (59/61) [97%]<br />
 - CPedDamageResponseCalculator (2/7) [29%]<br />
 - CWaterLevel (25/35) [71%]<br />
 - CWeapon (35/41) [85%]<br />
@@ -704,7 +707,6 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 - CTaskComplexWaitForBus (2/7) [29%]<br />
 - CTaskSimpleCarDrive (7/13) [54%]<br />
 - CTaskSimpleUseGun (18/19) [95%]<br />
-- CTaskSimplePlayerOnFoot (11/12) [92%]<br />
 - CTaskComplexFollowLeaderInFormation (1/7) [14%]<br />
 - CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
@@ -721,8 +723,6 @@ Last update was at Oct 19, 2026 at 17:09:41 UTC
 - CAEPoliceScannerAudioEntity (13/17) [76%]<br />
 - CAEScriptAudioEntity (8/19) [42%]<br />
 - CAEVehicleAudioEntity (102/106) [96%]<br />
-- CAEAudioHardware (54/55) [98%]<br />
-- CAEStaticChannel (7/8) [88%]<br />
 - CAEStreamingChannel (21/24) [88%]<br />
 - CAERadioTrackManager (29/43) [67%]<br />
 - CBike (22/40) [55%]<br />

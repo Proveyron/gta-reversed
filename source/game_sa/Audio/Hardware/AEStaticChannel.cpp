@@ -16,7 +16,7 @@ void CAEStaticChannel::InjectHooks() {
     RH_ScopedVMTInstall(SynchPlayback, 0x4F1040);
     RH_ScopedVMTInstall(Stop, 0x4F0FB0);
 
-    RH_ScopedInstall(SetAudioBuffer, 0x4F0C40, {.Reversed = false});
+    RH_ScopedInstall(SetAudioBuffer, 0x4F0C40);
 }
 
 CAEStaticChannel::CAEStaticChannel(IDirectSound* pDirectSound, uint16 channelId, bool hardwareMixAvailable, uint32 samplesPerSec, uint16 bitsPerSample) :
@@ -149,6 +149,118 @@ void CAEStaticChannel::Stop() {
     }
 }
 
+// 0x4F0C40
 bool CAEStaticChannel::SetAudioBuffer(IDirectSound3DBuffer* buffer, uint16 size, int16 f88, int16 f8c, int16 loopOffset, uint16 frequency) {
+#ifdef USE_DSOUND
+    if (!size || !frequency) {
+        return false;
+    }
+
+    if (m_pDirectSoundBuffer) {
+        --g_numSoundChannelsUsed;
+        m_pDirectSoundBuffer->Release();
+        m_pDirectSoundBuffer = nullptr;
+    }
+    if (m_pDirectSound3DBuffer) {
+        m_pDirectSound3DBuffer->Release();
+        m_pDirectSound3DBuffer = nullptr;
+    }
+
+    m_pBuffer = buffer;
+    m_bLooped = false;
+    m_bNeedData = false;
+    m_bPaused = false;
+    m_nCurrentBufferOffset = 0;
+    field_68 = 0;
+    field_6C = 0;
+    m_nLengthInBytes = size;
+    field_88 = f88;
+    field_8C = f8c;
+
+    if (loopOffset != -1) {
+        m_bLooped = true;
+        m_nCurrentBufferOffset = (int32)loopOffset * 2;
+        field_68 = size;
+    }
+
+    if (m_bLooped && m_nCurrentBufferOffset != 0) {
+        const auto loopLen = (uint32)(field_68 - m_nCurrentBufferOffset);
+        m_nNumLockBytes = loopLen;
+        const auto minBytes = std::max((uint32)field_68, 24000u);
+        field_6C = (minBytes / loopLen) + 1;
+        m_nBufferBytes = field_6C * loopLen;
+    } else {
+        m_nBufferBytes = size;
+    }
+
+    m_nFrequency = frequency;
+    m_nOriginalFrequency = frequency;
+    m_WaveFormat.wFormatTag = WAVE_FORMAT_PCM;
+    m_WaveFormat.nChannels = 1;
+    m_WaveFormat.nSamplesPerSec = frequency;
+    m_WaveFormat.nAvgBytesPerSec = frequency * 2;
+    m_WaveFormat.nBlockAlign = 2;
+    m_WaveFormat.wBitsPerSample = 16;
+    m_WaveFormat.cbSize = 0;
+
+    DSBUFFERDESC dsbdesc{};
+    dsbdesc.dwSize = sizeof(DSBUFFERDESC);
+    dsbdesc.dwFlags = (m_IsHardwareMixAvailable ? 0x80b4 : 0x80b8);
+    dsbdesc.dwBufferBytes = m_nBufferBytes;
+    dsbdesc.lpwfxFormat = &m_WaveFormat;
+
+    HRESULT hr = m_pDirectSound->CreateSoundBuffer(&dsbdesc, &m_pDirectSoundBuffer, nullptr);
+    if (FAILED(hr)) {
+        return false;
+    }
+
+    g_numSoundChannelsUsed++;
+
+    LPVOID audioPtr1 = nullptr;
+    DWORD audioBytes1 = 0;
+    hr = m_pDirectSoundBuffer->Lock(0, m_nLengthInBytes, &audioPtr1, &audioBytes1, nullptr, nullptr, DSBLOCK_ENTIREBUFFER);
+    if (FAILED(hr)) {
+        if (m_pDirectSoundBuffer) {
+            m_pDirectSoundBuffer->Release();
+            m_pDirectSoundBuffer = nullptr;
+        }
+        return false;
+    }
+
+    uint32 playPos = 0;
+    if (m_nCurrentBufferOffset == 0) {
+        memcpy(audioPtr1, m_pBuffer, size);
+        if (size < m_nLengthInBytes) {
+            memset((uint8*)audioPtr1 + size, 0, m_nLengthInBytes - size);
+        }
+        m_bNeedData = false;
+        playPos = 0;
+    } else {
+        playPos = m_nBufferBytes - m_nCurrentBufferOffset;
+        memcpy((uint8*)audioPtr1 + playPos, m_pBuffer, m_nCurrentBufferOffset);
+
+        const auto loopLen = (uint32)m_nNumLockBytes;
+        m_nNumLoops = (m_nCurrentBufferOffset / loopLen) + 1;
+        m_dwLockOffset = m_nBufferBytes - (m_nNumLoops * loopLen);
+
+        const auto numCopies = field_6C - m_nNumLoops;
+        for (auto i = 0u; i < numCopies; i++) {
+            memcpy((uint8*)audioPtr1 + i * loopLen, (uint8*)m_pBuffer + m_nCurrentBufferOffset, loopLen);
+        }
+
+        field_74 = (int32)ConvertFromBytesToMS(m_nCurrentBufferOffset);
+        m_bNeedData = true;
+    }
+
+    m_pDirectSoundBuffer->Unlock(audioPtr1, audioBytes1, nullptr, 0);
+    m_pDirectSoundBuffer->SetCurrentPosition(playPos);
+    m_pDirectSoundBuffer->QueryInterface(IID_IDirectSound3DBuffer, (void**)&m_pDirectSound3DBuffer);
+
+    m_Volume = -100.0f;
+    m_pDirectSoundBuffer->SetVolume(DSBVOLUME_MIN);
+
+    return true;
+#else
     return false;
+#endif
 }

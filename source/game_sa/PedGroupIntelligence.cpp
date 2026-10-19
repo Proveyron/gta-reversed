@@ -37,7 +37,7 @@ void CPedGroupIntelligence::InjectHooks() {
     RH_ScopedInstall(ComputeEventResponseTasks, 0x5FC440);
     RH_ScopedInstall(Process, 0x5FC4A0);
     RH_ScopedInstall(ReportAllTasksFinished, 0x5F7730);
-    RH_ScopedInstall(ComputeScriptCommandTasks, 0x5F7800, { .Reversed = false });
+    RH_ScopedInstall(ComputeScriptCommandTasks, 0x5F7800);
 }
 
 // 0x5F7250
@@ -438,6 +438,52 @@ CTaskAllocator* CPedGroupIntelligence::ComputeEventResponseTasks() {
     return CGroupEventHandler::ComputeEventResponseTasks(*m_CurrentEvent, m_pPedGroup);
 }
 
+// 0x5F7800
 void CPedGroupIntelligence::ComputeScriptCommandTasks() {
-    plugin::CallMethod<0x5F7800>(this);
+    PedTaskPairs newPairs{};
+
+    auto& membership = m_pPedGroup->GetMembership();
+    for (size_t i = 0; i < TOTAL_PED_GROUP_MEMBERS; i++) {
+        CPed* member = membership.GetMember((int32)i);
+        if (member == m_ScriptCommandPedTaskPairs[i].Ped) {
+            newPairs[i].Ped = m_ScriptCommandPedTaskPairs[i].Ped;
+            newPairs[i].Task = m_ScriptCommandPedTaskPairs[i].Task;
+        } else {
+            newPairs[i].Ped = member;
+            newPairs[i].Task = nullptr;
+            for (size_t j = 0; j < TOTAL_PED_GROUP_MEMBERS; j++) {
+                if (m_ScriptCommandPedTaskPairs[j].Ped == member) {
+                    newPairs[i].Task = m_ScriptCommandPedTaskPairs[j].Task;
+                    break;
+                }
+            }
+        }
+    }
+
+    for (size_t i = 0; i < TOTAL_PED_GROUP_MEMBERS; i++) {
+        if (!m_ScriptCommandPedTaskPairs[i].Task) {
+            continue;
+        }
+
+        bool retained = false;
+        for (size_t j = 0; j < TOTAL_PED_GROUP_MEMBERS; j++) {
+            if (newPairs[j].Ped == m_ScriptCommandPedTaskPairs[i].Ped) {
+                if (newPairs[j].Task) {
+                    retained = true;
+                }
+                break;
+            }
+        }
+
+        if (!retained) {
+            delete m_ScriptCommandPedTaskPairs[i].Task;
+            m_ScriptCommandPedTaskPairs[i].Ped = nullptr;
+            m_ScriptCommandPedTaskPairs[i].Task = nullptr;
+        }
+    }
+
+    for (size_t i = 0; i < TOTAL_PED_GROUP_MEMBERS; i++) {
+        m_ScriptCommandPedTaskPairs[i].Ped = newPairs[i].Ped;
+        m_ScriptCommandPedTaskPairs[i].Task = newPairs[i].Task;
+    }
 }
