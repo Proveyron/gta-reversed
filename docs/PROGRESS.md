@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 19:07:29 UTC
+Last update was at Oct 19, 2026 at 20:00:51 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7602 out of 8295 functions done in 719 categories)
+## Stats (7606 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (640/719) [89%]
+#### Completely reversed categories (642/719) [89%]
 
 <details>
 <summary>See list of categories</summary>
@@ -369,6 +369,8 @@ Last update was at Oct 19, 2026 at 19:07:29 UTC
 - CTaskComplexInWater (7)<br />
 - CTaskComplexInvestigateDeadPed (9)<br />
 - CTaskComplexInvestigateDisturbance (8)<br />
+- CTaskComplexKillCriminal (11)<br />
+- CTaskComplexKillPedOnFootArmed (11)<br />
 - CTaskComplexKillPedGroupOnFoot (9)<br />
 - CTaskComplexKillPedOnFootMelee (10)<br />
 - CTaskComplexKillPedOnFootStealth (7)<br />
@@ -657,7 +659,7 @@ Last update was at Oct 19, 2026 at 19:07:29 UTC
 
 </details>
 
-#### Partially reversed categories (74/719) [10%]
+#### Partially reversed categories (72/719) [10%]
 
 <details>
 <summary>See list of categories</summary>
@@ -704,8 +706,6 @@ Last update was at Oct 19, 2026 at 19:07:29 UTC
 - CTaskComplexGoToAttractor (2/5) [40%]<br />
 - CTaskComplexGoToPointAnyMeans (3/7) [43%]<br />
 - CTaskComplexGotoDoorAndOpen (3/7) [43%]<br />
-- CTaskComplexKillCriminal (9/11) [82%]<br />
-- CTaskComplexKillPedOnFootArmed (9/11) [82%]<br />
 - CTaskComplexLeaveCarAndWander (2/8) [25%]<br />
 - CTaskComplexSignalAtPed (4/7) [57%]<br />
 - CTaskComplexSmartFleePoint (2/12) [17%]<br />

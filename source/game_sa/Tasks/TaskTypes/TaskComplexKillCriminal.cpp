@@ -27,8 +27,8 @@ void CTaskComplexKillCriminal::InjectHooks() {
     RH_ScopedVMTInstall(GetTaskType, 0x68BF20);
     RH_ScopedVMTInstall(MakeAbortable, 0x68DAD0);
     RH_ScopedVMTInstall(CreateNextSubTask, 0x68E4F0);
-    RH_ScopedVMTInstall(CreateFirstSubTask, 0x68DC60, {.Reversed = false});
-    RH_ScopedVMTInstall(ControlSubTask, 0x68E950, {.Reversed = false});
+    RH_ScopedVMTInstall(CreateFirstSubTask, 0x68DC60);
+    RH_ScopedVMTInstall(ControlSubTask, 0x68E950);
 }
 
 bool NoPedOrNoHp(CPed* ped) {
@@ -336,18 +336,12 @@ CTask* CTaskComplexKillCriminal::CreateNextSubTask(CPed* ped) {
 
 // 0x68DC60
 CTask* CTaskComplexKillCriminal::CreateFirstSubTask(CPed* ped) {
-    return plugin::CallMethodAndReturn<CTask*, 0x68DC60, CTaskComplexKillCriminal*, CPed*>(this, ped); // Good luck!
-}
-
-// 0x68E950
-CTask* CTaskComplexKillCriminal::ControlSubTask(CPed* ped) {
-    /*
-    if (m_criminal && !m_criminal->CanBeCriminal()) {
+    if (!m_Criminal || m_Criminal->IsDead()) {
         return nullptr;
     }
 
-    if (const auto wanted = FindPlayerWanted(); wanted->m_nWantedLevel) {
-        if (wanted->CanCopJoinPursuit(static_cast<CCopPed*>(ped)) && m_pSubTask->MakeAbortable(ped, ABORT_PRIORITY_URGENT, nullptr)) {
+    if (auto* player = FindPlayerPed(-1)) {
+        if (player->GetPlayerData() && player->GetPlayerData()->m_pWanted && player->GetPlayerData()->m_pWanted->m_nWantedLevel > 0) {
             return nullptr;
         }
     }
@@ -356,16 +350,120 @@ CTask* CTaskComplexKillCriminal::ControlSubTask(CPed* ped) {
         return nullptr;
     }
 
-    auto taskToCreate = TASK_NONE;
+    if (ped->m_nPedType != PED_TYPE_COP) {
+        return nullptr;
+    }
 
-    const auto cpartner = m_cop->m_pCopPartner;
-    if (!m_cop->m_isTheDriver && IsPedNullOrLowHP(cpartner)) {
-        m_cop->m_isTheDriver = true;
-        m_cop->SetPartner(nullptr);
-        if (m_cop->IsInVehicle()) {
-            taskToCreate = TASK_COMPLEX_LEAVE_CAR;
+    m_Cop = static_cast<CCopPed*>(ped);
+
+    if (m_Randomize) {
+        if (!m_Criminal->IsInVehicle()) {
+            if (CGeneral::GetRandomNumberInRange(0, 3) != 0) {
+                return nullptr;
+            }
         }
     }
-    */
-    return plugin::CallMethodAndReturn<CTask*, 0x68E950, CTaskComplexKillCriminal*, CPed*>(this, ped); // Good luck!
+
+    if (m_Criminal->IsInVehicle()) {
+        m_Criminal->m_pVehicle->m_autoPilot.m_nCarMission = MISSION_FLEE_PLAYER;
+    }
+
+    if (m_Cop->IsInVehicle()) {
+        auto* veh = m_Cop->m_pVehicle;
+        if (veh->IsDriver(m_Cop)) {
+            m_Cop->m_bIsTheDriver = true;
+            if (m_Cop->m_pCopPartner) {
+                m_Cop->m_pCopPartner->m_bIsTheDriver = false;
+            }
+        } else {
+            m_Cop->m_bIsTheDriver = false;
+        }
+
+        if (m_Criminal->IsInVehicle()) {
+            return CreateSubTask(TASK_COMPLEX_CAR_DRIVE_MISSION, ped);
+        } else {
+            return CreateSubTask(TASK_SIMPLE_GANG_DRIVEBY, ped);
+        }
+    } else {
+        if (m_Criminal->IsInVehicle()) {
+            if (m_Cop->m_pVehicle && m_Cop->m_pVehicle->CanPedEnterCar()) {
+                return CreateSubTask(TASK_COMPLEX_ENTER_CAR_AS_DRIVER, ped);
+            }
+        }
+        return CreateSubTask(TASK_COMPLEX_KILL_PED_ON_FOOT, ped);
+    }
+}
+
+// 0x68E950
+CTask* CTaskComplexKillCriminal::ControlSubTask(CPed* ped) {
+    if (!m_Criminal || m_Criminal->IsDead()) {
+        return nullptr;
+    }
+
+    if (m_Criminal->m_nPedState == PEDSTATE_ARRESTED || m_Criminal->m_nPedState == PEDSTATE_ARRESTING || m_Criminal->m_nPedState >= 0x18) {
+        return nullptr;
+    }
+
+    if (auto* player = FindPlayerPed(-1)) {
+        if (auto* wanted = player->GetPlayerData() ? player->GetPlayerData()->m_pWanted : nullptr) {
+            if (wanted->m_nWantedLevel > 0 && wanted->CanCopJoinPursuit(static_cast<CCopPed*>(ped))) {
+                if (m_pSubTask && m_pSubTask->MakeAbortable(ped, ABORT_PRIORITY_URGENT, nullptr)) {
+                    return nullptr;
+                }
+            }
+        }
+    }
+
+    if (!g_LoadMonitor.m_bEnableAmbientCrime) {
+        return nullptr;
+    }
+
+    if (!m_Cop->m_bIsTheDriver && (!m_Cop->m_pCopPartner || m_Cop->m_pCopPartner->IsDead())) {
+        m_Cop->m_bIsTheDriver = true;
+        m_Cop->SetPartner(nullptr);
+        if (m_Cop->IsInVehicle()) {
+            return CreateSubTask(TASK_COMPLEX_LEAVE_CAR, ped);
+        }
+    }
+
+    if (m_Cop->IsDead() || m_Criminal->IsDead()) {
+        return nullptr;
+    }
+
+    if (!m_Cop->m_bIsTheDriver) {
+        if (!m_Cop->m_pCopPartner || !m_Cop->m_pCopPartner->IsInVehicle()) {
+            return CreateSubTask(TASK_COMPLEX_ENTER_CAR_AS_PASSENGER, ped);
+        }
+        if (m_Cop->m_pVehicle && !m_CantGetInCar) {
+            if (!m_Cop->IsInVehicle()) {
+                return CreateSubTask(TASK_COMPLEX_ENTER_CAR_AS_PASSENGER, ped);
+            } else if (m_Criminal->IsInVehicle()) {
+                float dist = DistanceBetweenPoints(m_Cop->GetPosition(), m_Criminal->GetPosition());
+                if (dist > 25.0f) {
+                    return CreateSubTask(TASK_SIMPLE_GANG_DRIVEBY, ped);
+                }
+            } else {
+                return CreateSubTask(TASK_COMPLEX_LEAVE_CAR, ped);
+            }
+        }
+    } else {
+        if (m_Cop->m_pVehicle) {
+            m_Cop->m_pVehicle->vehicleFlags.bSirenOrAlarm = true;
+        }
+
+        if (m_Criminal->IsInVehicle()) {
+            if (!m_Cop->IsInVehicle()) {
+                return CreateSubTask(TASK_COMPLEX_ENTER_CAR_AS_DRIVER, ped);
+            }
+        } else {
+            if (m_Cop->IsInVehicle()) {
+                float dist = DistanceBetweenPoints(m_Cop->GetPosition(), m_Criminal->GetPosition());
+                if (dist < 20.0f) {
+                    return CreateSubTask(TASK_COMPLEX_LEAVE_CAR, ped);
+                }
+            }
+        }
+    }
+
+    return m_pSubTask;
 }

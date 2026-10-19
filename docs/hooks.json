@@ -25382,12 +25382,12 @@
     {
         "Category": "CTaskComplexKillCriminal",
         "Name": "CreateFirstSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexKillCriminal",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexKillPedOnFootArmed",
@@ -25412,7 +25412,7 @@
     {
         "Category": "CTaskComplexKillPedOnFootArmed",
         "Name": "CreateSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexKillPedOnFootArmed",
@@ -25432,7 +25432,7 @@
     {
         "Category": "CTaskComplexKillPedOnFootArmed",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexKillPedOnFootArmed",
