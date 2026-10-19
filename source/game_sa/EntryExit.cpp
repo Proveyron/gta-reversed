@@ -10,6 +10,7 @@
 #include "PlayerPed.h"
 #include "Object.h"
 #include "Interior/InteriorManager_c.h"
+#include "Rubbish.h"
 
 void CEntryExit::InjectHooks() {
     RH_ScopedClass(CEntryExit);
@@ -21,7 +22,7 @@ void CEntryExit::InjectHooks() {
     RH_ScopedInstall(IsInArea, 0x43E460);
     RH_ScopedInstall(GetPositionRelativeToOutsideWorld, 0x43EA00, {.Locked = true});
     RH_ScopedInstall(TransitionStarted, 0x43FFD0);
-    RH_ScopedInstall(TransitionFinished, 0x4404A0, { .Reversed = false });
+    RH_ScopedInstall(TransitionFinished, 0x4404A0);
     RH_ScopedInstall(RequestObjectsInFrustum, 0x43E690);
     RH_ScopedInstall(RequestAmbientPeds, 0x43E6D0);
     RH_ScopedInstall(WarpGangWithPlayer, 0x43F1F0);
@@ -318,8 +319,6 @@ bool CEntryExit::TransitionStarted(CPed* ped) {
 
 // 0x4404A0
 bool CEntryExit::TransitionFinished(CPed* ped) {
-    return plugin::CallMethodAndReturn<bool, 0x4404A0, CEntryExit*, CPed*>(this, ped);
-    /*
     const auto spawnPos = ms_spawnPoint->m_vecExitPos;
 
     if (const auto entity = ped->GetEntityThatThisPedIsHolding()) {
@@ -399,7 +398,6 @@ bool CEntryExit::TransitionFinished(CPed* ped) {
                 break;
             }
             return false;
-            break;
         }
         }
     }
@@ -409,7 +407,7 @@ bool CEntryExit::TransitionFinished(CPed* ped) {
     if (ped->m_pVehicle && ped->bInVehicle) {
         ped->m_pVehicle->m_AreaCode = (eAreaCodes)CGame::currArea;
     }
-    ped->m_pEnex = CGame::CanSeeOutSideFromCurrArea() ? nullptr : this; // Inverted
+    ped->m_pEnex = CGame::CanSeeOutSideFromCurrArea() ? nullptr : this;
 
     CEntryExitManager::AddEntryExitToStack(this);
 
@@ -431,7 +429,7 @@ bool CEntryExit::TransitionFinished(CPed* ped) {
     CWaterLevel::FindNearestWaterAndItsFlow();
     CGarages::CloseHideOutGaragesBeforeSave();
     CEntryExitManager::ResetAreaCodeForVisibleObjects();
-    //g_interiorMan.SetEntryExitPtr(this); // TODO
+    g_interiorMan.SetEntryExitPtr(this);
     CPopulation::RemoveAllRandomPeds();
     RequestAmbientPeds();
     CStreaming::LoadAllRequestedModels(0);
@@ -446,13 +444,11 @@ bool CEntryExit::TransitionFinished(CPed* ped) {
     CStreaming::LoadAllRequestedModels(0);
     GenerateAmbientPeds(spawnPos);
 
-    // TODO
-    // if (g_interiorMan.Update())
-    // {
-    //     CStreaming::SetLoadVehiclesInLoadScene(false);
-    //     CStreaming::LoadScene(spawnPoint);
-    //     CStreaming::SetLoadVehiclesInLoadScene(true);
-    // }
+    if (g_interiorMan.Update()) {
+        CStreaming::SetLoadVehiclesInLoadScene(false);
+        CStreaming::LoadScene(spawnPos);
+        CStreaming::SetLoadVehiclesInLoadScene(true);
+    }
 
     CTimer::Resume();
 
@@ -464,8 +460,7 @@ bool CEntryExit::TransitionFinished(CPed* ped) {
         CTimeCycle::StopExtraColour(0);
     }
 
-    // TODO
-    //CRubbish::SetVisibility((CRubbish*)(ms_spawnPoint->flags & 1));
+    CRubbish::SetVisibility(ms_spawnPoint->m_nFlags & 1);
 
     if (ped->bInVehicle) {
         CVector teleportPos = spawnPos;
@@ -485,12 +480,12 @@ bool CEntryExit::TransitionFinished(CPed* ped) {
 
         CTheScripts::ClearSpaceForMissionEntity(ped->GetPosition(), ped);
 
-        if (bRewardInterior) {
+        if (ms_spawnPoint->bUsedRewardEntrance) {
             CShopping::RemoveLoadedShop();
-        } else {
+        } else if (ms_spawnPoint->bRewardInterior) {
             CShopping::LoadShop(m_szName);
             if (m_pLink) {
-                m_pLink->bRewardInterior = true;
+                m_pLink->bUsedRewardEntrance = true;
             }
         }
 
@@ -508,15 +503,15 @@ bool CEntryExit::TransitionFinished(CPed* ped) {
             CEntryExitManager::DeleteOne(CEntryExitManager::mp_poolEntryExits->GetIndex(ms_spawnPoint));
         }
 
-        // TODO
-        auto task = static_cast<CTaskComplexFacial*>(ped->GetTaskManager().GetTaskSecondary(TASK_SECONDARY_FACIAL_COMPLEX));
-        task->StopAll();
+        auto task = static_cast<CTaskComplexFacial*>(ped->GetIntelligence()->GetTaskManager().GetTaskSecondary(TASK_SECONDARY_FACIAL_COMPLEX));
+        if (task) {
+            task->StopAll();
+        }
 
         CGame::TidyUpMemory(true, true);
     }
 
-    return 0; // TODO
-    */
+    return true;
 }
 
 // 0x43E6D0

@@ -69,7 +69,78 @@ CTaskAllocator* CTaskAllocatorKillThreatsBasic::ProcessGroup(CPedGroupIntelligen
 
 // 0x69C850
 void CTaskAllocatorKillThreatsBasic::ComputeClosestPeds(CPedGroup& group1, CPedGroup& group2, CPed** peds) {
-    plugin::Call<0x69C850, CPedGroup&, CPedGroup&, CPed**>(group1, group2, peds);
+    std::fill_n(peds, TOTAL_PED_GROUP_MEMBERS, nullptr);
+
+    float distMatrix[TOTAL_PED_GROUP_MEMBERS][TOTAL_PED_GROUP_MEMBERS];
+    for (auto& row : distMatrix) {
+        std::fill(std::begin(row), std::end(row), std::numeric_limits<float>::max());
+    }
+
+    auto& membership1 = group1.GetMembership();
+    auto& membership2 = group2.GetMembership();
+
+    for (int32 i = 0; i < TOTAL_PED_GROUP_MEMBERS; ++i) {
+        CPed* ped1 = membership1.GetMember(i);
+        if (!ped1 || !ped1->IsAlive() || ped1->IsPlayer()) {
+            continue;
+        }
+
+        for (int32 j = 0; j < TOTAL_PED_GROUP_MEMBERS; ++j) {
+            CPed* ped2 = membership2.GetMember(j);
+            if (!ped2 || !ped2->IsAlive()) {
+                continue;
+            }
+
+            distMatrix[i][j] = DistanceBetweenPointsSquared(ped1->GetPosition(), ped2->GetPosition());
+        }
+    }
+
+    for (int32 iter = 0; iter < TOTAL_PED_GROUP_MEMBERS; ++iter) {
+        float minDistance = std::numeric_limits<float>::max();
+        int32 bestI = -1;
+        int32 bestJ = -1;
+
+        for (int32 i = 0; i < TOTAL_PED_GROUP_MEMBERS; ++i) {
+            for (int32 j = 0; j < TOTAL_PED_GROUP_MEMBERS; ++j) {
+                if (distMatrix[i][j] < minDistance) {
+                    minDistance = distMatrix[i][j];
+                    bestI = i;
+                    bestJ = j;
+                }
+            }
+        }
+
+        if (bestI < 0 || bestJ < 0) {
+            break;
+        }
+
+        for (int32 k = 0; k < TOTAL_PED_GROUP_MEMBERS; ++k) {
+            distMatrix[bestI][k] = std::numeric_limits<float>::max();
+            distMatrix[k][bestJ] = std::numeric_limits<float>::max();
+        }
+
+        peds[bestI] = membership2.GetMember(bestJ);
+    }
+
+    CPed* fallback = membership2.GetLeader();
+    if (!fallback || !fallback->IsAlive()) {
+        fallback = nullptr;
+        for (int32 j = 0; j < TOTAL_PED_GROUP_FOLLOWERS; ++j) {
+            CPed* member = membership2.GetMember(j);
+            if (member && member->IsAlive()) {
+                fallback = member;
+                break;
+            }
+        }
+    }
+
+    if (fallback) {
+        for (int32 i = 0; i < TOTAL_PED_GROUP_MEMBERS; ++i) {
+            if (membership1.GetMember(i) && !peds[i]) {
+                peds[i] = fallback;
+            }
+        }
+    }
 }
 
 void CTaskAllocatorKillThreatsBasic::InjectHooks() {
@@ -79,7 +150,7 @@ void CTaskAllocatorKillThreatsBasic::InjectHooks() {
     RH_ScopedInstall(Constructor, 0x69C710);
     RH_ScopedInstall(Destructor, 0x69C780);
 
-    RH_ScopedGlobalInstall(ComputeClosestPeds, 0x69C850, { .Reversed = false });
+    RH_ScopedGlobalInstall(ComputeClosestPeds, 0x69C850);
     RH_ScopedVMTInstall(GetType, 0x69C770);
     RH_ScopedVMTInstall(AllocateTasks, 0x69D170);
     RH_ScopedVMTInstall(ProcessGroup, 0x69C7E0);

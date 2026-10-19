@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 16:32:04 UTC
+Last update was at Oct 19, 2026 at 17:09:41 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7558 out of 8295 functions done in 719 categories)
+## Stats (7568 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (607/719) [84%]
+#### Completely reversed categories (617/719) [86%]
 
 <details>
 <summary>See list of categories</summary>
@@ -135,6 +135,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CCustomCarPlateMgr (15)<br />
 - CDraw (2)<br />
 - CEntryExitManager (18)<br />
+- CEntryExit (11)<br />
 - CInformGroupEvent (3)<br />
 - CInformGroupEventQueue (4)<br />
 - CGangs (8)<br />
@@ -144,6 +145,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CGamma (2)<br />
 - CHudColours (5)<br />
 - CTxdStore (26)<br />
+- CEntityScanner (4)<br />
 - CPedType (13)<br />
 - CAcquaintance (5)<br />
 - CWeather (13)<br />
@@ -200,6 +202,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - FxInfoManager_c (5)<br />
 - FxManager_c (25)<br />
 - FxEmitterPrt_c (1)<br />
+- FxEmitter_c (1)<br />
 - Fx_c (8)<br />
 - CPedAttractorPedPlacer (1)<br />
 - CCopPed (7)<br />
@@ -310,6 +313,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CPedGroupDefaultTaskAllocatorSitInLeaderCar (2)<br />
 - CPedGroupDefaultTaskAllocatorRandom (2)<br />
 - CTaskAllocator (3)<br />
+- CTaskAllocatorKillThreatsBasic (6)<br />
 - CTaskAllocatorKillThreatsDriveby (5)<br />
 - CTaskAllocatorKillThreatsBasicRandomGroup (2)<br />
 - CTaskAllocatorKillOnFoot (4)<br />
@@ -323,6 +327,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CTaskComplexDiveFromAttachedEntityAndGetUp (7)<br />
 - CTaskLeanOnVehicle (5)<br />
 - CTaskComplexCarSlowBeDraggedOut (11)<br />
+- CTaskComplexDestroyCar (9)<br />
 - CTaskComplexDestroyCarArmed (10)<br />
 - CTaskComplexDestroyCarMelee (10)<br />
 - CTaskComplexDieInCar (6)<br />
@@ -342,6 +347,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CTaskComplexGetOnBoatSeat (8)<br />
 - CTaskComplexGoToBoatSteeringWheel (6)<br />
 - CTaskComplexGoToCarDoorAndStandStill (11)<br />
+- CTaskComplexGoToPointAndStandStillAndAchieveHeading (8)<br />
 - CTaskComplexGoToPointShooting (3)<br />
 - CTaskComplexHitByGunResponse (8)<br />
 - CTaskComplexHitResponse (7)<br />
@@ -487,7 +493,9 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CTaskSimpleGiveCPR (6)<br />
 - CTaskComplexDriveFireTruck (6)<br />
 - CTaskSimpleSwim (11)<br />
+- CTaskComplexWalkRoundObject (2)<br />
 - CTaskSimplePause (4)<br />
+- CTaskComplexKillPedOnFoot (2)<br />
 - CTaskSimpleThrowProjectile (9)<br />
 - CTaskSimpleGoToPoint (6)<br />
 - CTaskSimpleStealthKill (7)<br />
@@ -505,6 +513,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CTaskSimpleHoldEntity (14)<br />
 - CTaskSimpleGoTo (4)<br />
 - CTaskComplexPartner (1)<br />
+- CTaskComplexWander (14)<br />
 - CTaskSimplePutDownEntity (3)<br />
 - CTaskComplexUseSwatRope (7)<br />
 - CTaskSimpleGoToPointFine (8)<br />
@@ -606,6 +615,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CAEVorbisDecoder (13)<br />
 - CAEWaveDecoder (9)<br />
 - CAEWMADecoder (11)<br />
+- CAEAmbienceTrackManager (7)<br />
 - CAECutsceneTrackManager (8)<br />
 - CAESoundManager (14)<br />
 - CAEUserRadioTrackManager (15)<br />
@@ -624,7 +634,7 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 
 </details>
 
-#### Partially reversed categories (105/719) [15%]
+#### Partially reversed categories (96/719) [13%]
 
 <details>
 <summary>See list of categories</summary>
@@ -657,10 +667,8 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CRoadBlocks (7/8) [88%]<br />
 - CPedGroups (2/11) [18%]<br />
 - CClouds (20/21) [95%]<br />
-- CEntryExit (10/11) [91%]<br />
 - CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
-- CEntityScanner (3/4) [75%]<br />
 - CPathFind (54/62) [87%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
 - CRadar (63/65) [97%]<br />
@@ -678,17 +686,14 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CPhysical (54/56) [96%]<br />
 - CGroupEventHandler (30/32) [94%]<br />
 - CEventHandler (69/72) [96%]<br />
-- CTaskAllocatorKillThreatsBasic (5/6) [83%]<br />
 - CTaskComplexUseClosestFreeScriptedAttractor (6/8) [75%]<br />
 - CTaskGangHasslePed (2/5) [40%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
-- CTaskComplexDestroyCar (8/9) [89%]<br />
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexGoToAttractor (2/5) [40%]<br />
 - CTaskComplexGoToPointAiming (6/8) [75%]<br />
-- CTaskComplexGoToPointAndStandStillAndAchieveHeading (7/8) [88%]<br />
 - CTaskComplexGoToPointAnyMeans (3/7) [43%]<br />
 - CTaskComplexGotoDoorAndOpen (3/7) [43%]<br />
 - CTaskComplexKillCriminal (9/11) [82%]<br />
@@ -704,12 +709,9 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
 - CTaskComplexSunbathe (2/8) [25%]<br />
-- CTaskComplexWalkRoundObject (1/2) [50%]<br />
-- CTaskComplexKillPedOnFoot (1/2) [50%]<br />
 - CTaskComplexWalkRoundCar (9/13) [69%]<br />
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
 - CTaskSimpleRunNamedAnim (4/7) [57%]<br />
-- CTaskComplexWander (13/14) [93%]<br />
 - CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - CCustomBuildingDNPipeline (14/16) [88%]<br />
@@ -722,7 +724,6 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 - CAEAudioHardware (54/55) [98%]<br />
 - CAEStaticChannel (7/8) [88%]<br />
 - CAEStreamingChannel (21/24) [88%]<br />
-- CAEAmbienceTrackManager (6/7) [86%]<br />
 - CAERadioTrackManager (29/43) [67%]<br />
 - CBike (22/40) [55%]<br />
 - CBmx (7/10) [70%]<br />
@@ -736,11 +737,10 @@ Last update was at Oct 19, 2026 at 16:32:04 UTC
 
 </details>
 
-#### Not-at-all reversed categories (7/719) [1.0%]
+#### Not-at-all reversed categories (6/719) [0.8%]
 
 <details>
 <summary>See list of categories</summary>
-- FxEmitter_c (1)<br />
 - CTaskComplexGangFollower (7)<br />
 - CTaskSimpleFight (5)<br />
 - CDecisionMakerTypes (8)<br />

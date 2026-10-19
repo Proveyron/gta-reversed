@@ -19,7 +19,7 @@ void CTaskComplexDestroyCar::InjectHooks() {
     RH_ScopedVMTInstall(MakeAbortable, 0x621C80);
     RH_ScopedVMTInstall(CreateNextSubTask, 0x62D9E0);
     RH_ScopedVMTInstall(CreateFirstSubTask, 0x62DA90);
-    RH_ScopedVMTInstall(ControlSubTask, 0x6288C0, { .Reversed = false });
+    RH_ScopedVMTInstall(ControlSubTask, 0x6288C0);
 }
 
 // 0x621C00
@@ -94,5 +94,37 @@ CTask* CTaskComplexDestroyCar::CreateSubTask(eTaskType taskType, CPed* ped) {
 
 // 0x6288C0
 CTask* CTaskComplexDestroyCar::ControlSubTask(CPed* ped) {
-    return plugin::CallMethodAndReturn<CTask*, 0x6288C0, CTaskComplexDestroyCar*, CPed*>(this, ped);
+    if (!m_VehicleToDestroy || m_VehicleToDestroy->m_fHealth <= 0.0f) {
+        return nullptr;
+    }
+
+    if (m_arg0) {
+        return CreateFirstSubTask(ped);
+    }
+
+    if (m_pSubTask->GetTaskType() == TASK_COMPLEX_DESTROY_CAR_MELEE) {
+        if (!ped->GetActiveWeapon().IsTypeMelee()) {
+            if (m_pSubTask->MakeAbortable(ped, ABORT_PRIORITY_URGENT, nullptr)) {
+                return CreateSubTask(TASK_COMPLEX_DESTROY_CAR_ARMED, ped);
+            }
+        }
+    } else if (m_pSubTask->GetTaskType() == TASK_COMPLEX_DESTROY_CAR_ARMED) {
+        if (ped->GetActiveWeapon().m_nAmmoTotal == 0 && !ped->IsPlayer()) {
+            int32 slot = 0;
+            for (; slot < 13; ++slot) {
+                if (ped->m_aWeapons[slot].m_nAmmoTotal > 0) {
+                    ped->SetCurrentWeapon(slot);
+                    break;
+                }
+            }
+            if (slot == 13) {
+                ped->SetCurrentWeapon(0);
+                if (m_pSubTask->MakeAbortable(ped, ABORT_PRIORITY_URGENT, nullptr)) {
+                    return CreateSubTask(TASK_COMPLEX_DESTROY_CAR_MELEE, ped);
+                }
+            }
+        }
+    }
+
+    return m_pSubTask;
 }

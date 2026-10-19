@@ -12897,7 +12897,7 @@
     {
         "Category": "CEntryExit",
         "Name": "TransitionFinished",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CEntryExit",
@@ -13852,7 +13852,7 @@
     {
         "Category": "CEntityScanner",
         "Name": "ScanForEntitiesInRange",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPedType",
@@ -18142,7 +18142,7 @@
     {
         "Category": "FxEmitter_c",
         "Name": "CreateParticles",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "Fx_c",
@@ -23487,7 +23487,7 @@
     {
         "Category": "CTaskAllocatorKillThreatsBasic",
         "Name": "ComputeClosestPeds",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskAllocatorKillThreatsBasic",
@@ -24072,7 +24072,7 @@
     {
         "Category": "CTaskComplexDestroyCar",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexDestroyCarArmed",
@@ -25052,7 +25052,7 @@
     {
         "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGoToPointAnyMeans",
@@ -30732,7 +30732,7 @@
     {
         "Category": "CTaskComplexWalkRoundObject",
         "Name": "CreateRouteTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimplePause",
@@ -30762,7 +30762,7 @@
     {
         "Category": "CTaskComplexKillPedOnFoot",
         "Name": "CreateSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimpleThrowProjectile",
@@ -31412,7 +31412,7 @@
     {
         "Category": "CTaskComplexWander",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexWander",
@@ -37657,7 +37657,7 @@
     {
         "Category": "CAEAmbienceTrackManager",
         "Name": "UpdateAmbienceTrackAndVolume",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEAmbienceTrackManager",

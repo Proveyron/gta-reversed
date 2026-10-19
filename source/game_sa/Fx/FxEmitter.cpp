@@ -15,8 +15,7 @@ void FxEmitter_c::InjectHooks() {
     // RH_ScopedInstall(Update_Reversed, 0x4A4460); // bad
     // RH_ScopedInstall(Reset_Reversed, 0x4A2570);
     // RH_ScopedOverloadedInstall(AddParticle_Reversed, "matrix", 0x4A3EA0, void(FxEmitter_c::*)(RwMatrix*, CVector*, float, FxPrtMult_c*, float, float, bool));
-    // RH_ScopedOverloadedInstall(AddParticle_Reversed, "", 0x4A4050, void(FxEmitter_c::*)(CVector*, CVector*, float, FxPrtMult_c*, float, float, bool));
-    RH_ScopedInstall(CreateParticles, 0x4A41E0, { .Reversed = false });
+    RH_ScopedInstall(CreateParticles, 0x4A41E0);
     // RH_ScopedInstall(CreateParticle, 0x4A2580);
 }
 
@@ -119,13 +118,11 @@ void FxEmitter_c::AddParticle(const RwMatrix& mat, const CVector& vel, float tim
 
 // 0x4A41E0
 void FxEmitter_c::CreateParticles(float currentTime, float deltaTime) {
-    return plugin::CallMethod<0x4A41E0, FxEmitter_c*, float, float>(this, currentTime, deltaTime);
-
     EmissionInfo_t emission;
     m_PrimBP->m_FxInfoManager.ProcessEmissionInfo(currentTime, deltaTime, m_System->m_SystemBP->m_fLength, m_System->m_UseConstTime, &emission);
 
-    auto lodStart = (float)m_PrimBP->m_FxInfoManager.m_nLodStart / 64.0f;
-    auto lodEnd   = (float)m_PrimBP->m_FxInfoManager.m_nLodEnd   / 64.0f;
+    const auto lodStart = (float)m_PrimBP->m_FxInfoManager.m_nLodStart / 64.0f;
+    const auto lodEnd   = (float)m_PrimBP->m_FxInfoManager.m_nLodEnd   / 64.0f;
 
     float visibility;
     if (m_System->m_fCameraDistance >= lodStart) {
@@ -138,7 +135,7 @@ void FxEmitter_c::CreateParticles(float currentTime, float deltaTime) {
         visibility = 1.0f;
     }
 
-    m_fEmissionIntensity += emission.m_fCount * visibility * ((float)m_System->m_nRateMult * 1000.0f);
+    m_fEmissionIntensity += emission.m_fCount * visibility * ((float)m_System->m_nRateMult * 0.001f);
     if (   CWeather::Wind >= emission.m_fMinWind
         && CWeather::Wind <= emission.m_fMaxWind
         && CWeather::Rain >= emission.m_fMinRain
@@ -159,14 +156,13 @@ void FxEmitter_c::CreateParticles(float currentTime, float deltaTime) {
         RwMatrixMultiply(mat, mat2, mat1);
         g_fxMan.FxRwMatrixDestroy(mat2);
 
-        auto counter = 0u;
-        for (auto step = 0u; counter < (uint32)m_fEmissionIntensity; step = counter) {
+        const auto numParticles = static_cast<uint32>(m_fEmissionIntensity);
+        for (uint32 step = 0; step < numParticles; ++step) {
             FxPrtMult_c prtMult;
-            auto timeSince = (float)step / m_fEmissionIntensity * deltaTime;
+            const auto timeSince = static_cast<float>(step) / m_fEmissionIntensity * deltaTime;
             CreateParticle(emission, *mat, nullptr, timeSince, prtMult, 1.2f, m_System->m_createLocal);
-            counter++;
         }
-        m_fEmissionIntensity -= m_fEmissionIntensity; // OG shit
+        m_fEmissionIntensity -= static_cast<float>(static_cast<int32>(m_fEmissionIntensity));
 
         g_fxMan.FxRwMatrixDestroy(mat1);
         g_fxMan.FxRwMatrixDestroy(mat);
