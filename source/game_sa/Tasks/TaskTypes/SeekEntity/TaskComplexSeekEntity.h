@@ -387,6 +387,10 @@ public:
         m_bTrackingEntity = v;
     }
 
+    [[nodiscard]] bool HasAchievedSeekEntity() const {
+        return m_bAchievedSeekEntity;
+    }
+
     auto& GetSeekPosCalculator() {
         return m_entitySeekPosCalculator;
     }

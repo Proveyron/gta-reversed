@@ -31997,7 +31997,7 @@
     {
         "Category": "CTaskComplexArrestPed",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexArrestPed",
@@ -32007,12 +32007,12 @@
     {
         "Category": "CTaskComplexArrestPed",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexArrestPed",
         "Name": "CreateSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CEntitySeekPosCalculatorStandard",

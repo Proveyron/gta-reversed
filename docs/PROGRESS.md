@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 21:27:59 UTC
+Last update was at Oct 19, 2026 at 21:34:39 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7637 out of 8295 functions done in 719 categories)
+## Stats (7640 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (654/719) [91%]
+#### Completely reversed categories (655/719) [91%]
 
 <details>
 <summary>See list of categories</summary>
@@ -557,6 +557,7 @@ Last update was at Oct 19, 2026 at 21:27:59 UTC
 - CTaskSimplePickUpEntity (4)<br />
 - CTaskComplexBeInGroup (10)<br />
 - CTaskComplexAvoidOtherPedWhileWandering (15)<br />
+- CTaskComplexArrestPed (7)<br />
 - CEntitySeekPosCalculatorStandard (1)<br />
 - CEntitySeekPosCalculatorRadiusAngleOffset (1)<br />
 - CEntitySeekPosCalculatorXYOffset (1)<br />
@@ -671,7 +672,7 @@ Last update was at Oct 19, 2026 at 21:27:59 UTC
 
 </details>
 
-#### Partially reversed categories (60/719) [8%]
+#### Partially reversed categories (59/719) [8%]
 
 <details>
 <summary>See list of categories</summary>
@@ -719,7 +720,6 @@ Last update was at Oct 19, 2026 at 21:27:59 UTC
 - CTaskComplexSunbathe (2/8) [25%]<br />
 - CTaskComplexWalkRoundCar (9/13) [69%]<br />
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
-- CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - CAEPedAudioEntity (16/20) [80%]<br />
 - CAEPoliceScannerAudioEntity (13/17) [76%]<br />
