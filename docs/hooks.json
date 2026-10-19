@@ -23817,17 +23817,17 @@
     {
         "Category": "CTaskGangHasslePed",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskGangHasslePed",
         "Name": "CreateFirstSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskGangHasslePed",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskGangHassleVehicle",

@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 21:12:06 UTC
+Last update was at Oct 19, 2026 at 21:19:26 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7628 out of 8295 functions done in 719 categories)
+## Stats (7631 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (651/719) [91%]
+#### Completely reversed categories (652/719) [91%]
 
 <details>
 <summary>See list of categories</summary>
@@ -345,6 +345,7 @@ Last update was at Oct 19, 2026 at 21:12:06 UTC
 - CTaskComplexEvasiveDiveAndGetUp (9)<br />
 - CTaskSimpleLeaveGroup (2)<br />
 - CTaskComplexDiveFromAttachedEntityAndGetUp (7)<br />
+- CTaskGangHasslePed (5)<br />
 - CTaskLeanOnVehicle (5)<br />
 - CTaskComplexCarSlowBeDraggedOut (11)<br />
 - CTaskComplexDestroyCar (9)<br />
@@ -668,7 +669,7 @@ Last update was at Oct 19, 2026 at 21:12:06 UTC
 
 </details>
 
-#### Partially reversed categories (63/719) [9%]
+#### Partially reversed categories (62/719) [9%]
 
 <details>
 <summary>See list of categories</summary>
@@ -701,7 +702,6 @@ Last update was at Oct 19, 2026 at 21:12:06 UTC
 - CPed (137/145) [94%]<br />
 - CPlayerPed (50/65) [77%]<br />
 - CEventHandler (69/72) [96%]<br />
-- CTaskGangHasslePed (2/5) [40%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
