@@ -24877,17 +24877,17 @@
     {
         "Category": "CTaskComplexGoToAttractor",
         "Name": "Clone",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGoToAttractor",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGoToAttractor",
         "Name": "CreateFirstSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGoToBoatSteeringWheel",
@@ -26292,17 +26292,17 @@
     {
         "Category": "CTaskComplexSignalAtPed",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexSignalAtPed",
         "Name": "CreateFirstSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexSignalAtPed",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexSitDownThenIdleThenStandUp",

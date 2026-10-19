@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 21:19:26 UTC
+Last update was at Oct 19, 2026 at 21:27:59 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7631 out of 8295 functions done in 719 categories)
+## Stats (7637 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (652/719) [91%]
+#### Completely reversed categories (654/719) [91%]
 
 <details>
 <summary>See list of categories</summary>
@@ -366,6 +366,7 @@ Last update was at Oct 19, 2026 at 21:19:26 UTC
 - CTaskComplexFollowPointRoute (13)<br />
 - CTaskComplexGangLeader (13)<br />
 - CTaskComplexGetOnBoatSeat (8)<br />
+- CTaskComplexGoToAttractor (5)<br />
 - CTaskComplexGoToBoatSteeringWheel (6)<br />
 - CTaskComplexGoToCarDoorAndStandStill (11)<br />
 - CTaskComplexGoToPointAiming (8)<br />
@@ -397,6 +398,7 @@ Last update was at Oct 19, 2026 at 21:19:26 UTC
 - CTaskComplexSeekEntityAiming (7)<br />
 - CTaskComplexSeekEntityAnyMeansXYOffset (5)<br />
 - CTaskComplexShuffleSeats (10)<br />
+- CTaskComplexSignalAtPed (7)<br />
 - CTaskComplexSitDownThenIdleThenStandUp (9)<br />
 - CTaskComplexSmartFleeEntity (7)<br />
 - CTaskComplexStareAtPed (7)<br />
@@ -669,7 +671,7 @@ Last update was at Oct 19, 2026 at 21:19:26 UTC
 
 </details>
 
-#### Partially reversed categories (62/719) [9%]
+#### Partially reversed categories (60/719) [8%]
 
 <details>
 <summary>See list of categories</summary>
@@ -706,11 +708,9 @@ Last update was at Oct 19, 2026 at 21:19:26 UTC
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
-- CTaskComplexGoToAttractor (2/5) [40%]<br />
 - CTaskComplexGoToPointAnyMeans (3/7) [43%]<br />
 - CTaskComplexGotoDoorAndOpen (3/7) [43%]<br />
 - CTaskComplexLeaveCarAndWander (2/8) [25%]<br />
-- CTaskComplexSignalAtPed (4/7) [57%]<br />
 - CTaskComplexSmartFleePoint (2/12) [17%]<br />
 - CTaskComplexWaitForBus (2/7) [29%]<br />
 - CTaskSimpleCarDrive (7/13) [54%]<br />
