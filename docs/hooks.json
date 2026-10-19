@@ -30147,7 +30147,7 @@
     {
         "Category": "CTaskSimpleJetPack",
         "Name": "DropJetPack",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimpleJetPack",

@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:46:49 UTC
+Last update was at Oct 19, 2026 at 15:49:27 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7546 out of 8295 functions done in 719 categories)
+## Stats (7547 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (595/719) [83%]
+#### Completely reversed categories (596/719) [83%]
 
 <details>
 <summary>See list of categories</summary>
@@ -468,6 +468,7 @@ Last update was at Oct 19, 2026 at 15:46:49 UTC
 - CTaskComplexFollowNodeRoute (19)<br />
 - CTaskSimpleHitHead (4)<br />
 - CTaskSimpleLand (6)<br />
+- CTaskSimpleJetPack (14)<br />
 - CTaskSimpleJump (8)<br />
 - CTaskSimpleFall (6)<br />
 - CTaskSimpleClimb (15)<br />
@@ -612,7 +613,7 @@ Last update was at Oct 19, 2026 at 15:46:49 UTC
 
 </details>
 
-#### Partially reversed categories (117/719) [16%]
+#### Partially reversed categories (116/719) [16%]
 
 <details>
 <summary>See list of categories</summary>
@@ -697,7 +698,6 @@ Last update was at Oct 19, 2026 at 15:46:49 UTC
 - CTaskSimplePlayerOnFoot (11/12) [92%]<br />
 - CTaskComplexFollowLeaderInFormation (1/7) [14%]<br />
 - CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
-- CTaskSimpleJetPack (13/14) [93%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
 - CTaskComplexSunbathe (2/8) [25%]<br />
 - CTaskComplexWalkRoundObject (1/2) [50%]<br />
