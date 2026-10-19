@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:04:23 UTC
+Last update was at Oct 19, 2026 at 15:12:11 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7533 out of 8295 functions done in 719 categories)
+## Stats (7534 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (584/719) [81%]
+#### Completely reversed categories (585/719) [81%]
 
 <details>
 <summary>See list of categories</summary>
@@ -144,6 +144,7 @@ Last update was at Oct 19, 2026 at 15:04:23 UTC
 - CWeather (13)<br />
 - CPathNode (1)<br />
 - CLoadMonitor (7)<br />
+- CPedStats (5)<br />
 - CCarGenerator (8)<br />
 - CTheCarGenerators (7)<br />
 - CCullZones (21)<br />
@@ -601,7 +602,7 @@ Last update was at Oct 19, 2026 at 15:04:23 UTC
 
 </details>
 
-#### Partially reversed categories (127/719) [18%]
+#### Partially reversed categories (126/719) [18%]
 
 <details>
 <summary>See list of categories</summary>
@@ -644,7 +645,6 @@ Last update was at Oct 19, 2026 at 15:04:23 UTC
 - CCarEnterExit (27/32) [84%]<br />
 - CEntityScanner (3/4) [75%]<br />
 - CPathFind (54/62) [87%]<br />
-- CPedStats (4/5) [80%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
 - CRadar (63/65) [97%]<br />
 - CPickups (35/37) [95%]<br />

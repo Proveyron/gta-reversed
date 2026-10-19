@@ -14382,7 +14382,7 @@
   {
     "Category": "CPedStats",
     "Name": "FindIndexWithPedStat",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarGenerator",
