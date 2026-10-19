@@ -41282,7 +41282,7 @@
   {
     "Category": "CTheScripts",
     "Name": "ScriptDebugCircle2D",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTheScripts",

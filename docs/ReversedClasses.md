@@ -1,17 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 05:44:57 UTC
-(Triggered by commit [2f62d4b7](https://github.com/gta-reversed/gta-reversed/commit/2f62d4b72d0c79591e197e48f8caca832aeebc5f))
+Last update was at Oct 19, 2026 at 15:04:23 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7532 out of 8295 functions done in 719 categories)
+## Stats (7533 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (583/719) [81%]
+#### Completely reversed categories (584/719) [81%]
 
 <details>
 <summary>See list of categories</summary>
@@ -596,12 +595,13 @@ Last update was at Oct 19, 2026 at 05:44:57 UTC
 - FurnitureGroup_c (6)<br />
 - FurnitureManager_c (7)<br />
 - InteriorManager_c (21)<br />
+- CTheScripts (69)<br />
 - CStreamedScripts (12)<br />
 - CScriptResourceManager (4)<br />
 
 </details>
 
-#### Partially reversed categories (128/719) [18%]
+#### Partially reversed categories (127/719) [18%]
 
 <details>
 <summary>See list of categories</summary>
@@ -731,7 +731,6 @@ Last update was at Oct 19, 2026 at 05:44:57 UTC
 - CVehicle (145/149) [97%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
 - CRunningScript (24/39) [62%]<br />
-- CTheScripts (68/69) [99%]<br />
 - CScripted2dEffects (4/5) [80%]<br />
 
 </details>
