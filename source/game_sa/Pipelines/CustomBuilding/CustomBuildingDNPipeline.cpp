@@ -2,6 +2,7 @@
 
 #include "CustomBuildingDNPipeline.h"
 #include "CustomCarEnvMapPipeline.h"
+#include "PipelinesCommon.hpp"
 
 auto& s_Magic1 = StaticRef<uint32>(0xC02C14);
 auto& s_Magic2 = StaticRef<uint32>(0xC02C18);
@@ -226,12 +227,111 @@ uint32 CCustomBuildingDNPipeline::UsesThisPipeline(RpAtomic* atomic) {
 
 // 0x5D7120
 RpMaterial* CCustomBuildingDNPipeline::CustomPipeMaterialSetup(RpMaterial* material, void* data) {
-    return plugin::CallAndReturn<RpMaterial*, 0x5D7120, RpMaterial*, void*>(material, data);
+    CCustomCarEnvMapPipeline::SetMaterialFlags(material, 0);
+
+    auto** const envMapData = &CCustomCarEnvMapPipeline::EnvMapPlGetData(material);
+    if (RpMatFXMaterialGetEffects(material) == rpMATFXEFFECTENVMAP) {
+        if (auto* const envData = SetFxEnvTexture(envMapData)) {
+            envData->Texture = MATFXD3D9ENVMAPGETDATA(material, 0)->texture;
+            if (envData->Texture) {
+                RwTextureSetAddressing(envData->Texture, rwTEXTUREADDRESSWRAP);
+                RwTextureSetFilterMode(envData->Texture, rwFILTERLINEAR);
+            }
+        }
+    }
+
+    const auto flags = (*envMapData && (*envMapData)->Shininess != 0.0f && (*envMapData)->Texture)
+        ? CCustomCarEnvMapPipeline::MF_HAS_SHINE_CAM
+        : CCustomCarEnvMapPipeline::MF_NONE;
+    CCustomCarEnvMapPipeline::SetMaterialFlags(material, (CCustomCarEnvMapPipeline::GetMaterialFlags(material) & ~7) | flags);
+
+    return material;
 }
 
 // 0x5D6480
-void CCustomBuildingDNPipeline::CustomPipeRenderCB(RwResEntry* entry, void* object, uint8 type, uint32 flags) {
-    plugin::Call<0x5D6480, RwResEntry*, void*, uint8, uint32>(entry, object, type, flags);
+void CCustomBuildingDNPipeline::CustomPipeRenderCB(RwResEntry* resEntry, void* object, uint8 type, uint32 rxGeoFlags) {
+    const auto atomic = static_cast<RpAtomic*>(object);
+
+    _rwD3D9EnableClippingIfNeeded(atomic, type);
+
+    DWORD isLightingEnabled = 0;
+    RwD3D9GetRenderState(D3DRS_LIGHTING, &isLightingEnabled);
+
+    const auto geoHasNoLighting = !isLightingEnabled && !(rxGeoFlags & rxGEOMETRY_PRELIT);
+    if (geoHasNoLighting) {
+        RwD3D9SetTexture(nullptr, 0);
+        RwD3D9SetRenderState(D3DRS_TEXTUREFACTOR, 0xFF000000);
+        RwD3D9SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
+        RwD3D9SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+        RwD3D9SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2);
+        RwD3D9SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
+    }
+
+    auto* const header = reinterpret_cast<RxD3D9ResEntryHeader*>(resEntry + 1);
+    auto* const meshes = reinterpret_cast<RxD3D9InstanceData*>(header + 1);
+
+    if (const auto i = header->indexBuffer) {
+        RwD3D9SetIndices(i);
+    }
+
+    _rwD3D9SetStreams(header->vertexStream, header->useOffsets);
+    RwD3D9SetVertexDeclaration(header->vertexDeclaration);
+
+    for (RwUInt32 i = 0; i < header->numMeshes; i++) {
+        auto* const mesh       = &meshes[i];
+        auto* const mat        = mesh->material;
+        const auto  matFlags   = CCustomCarEnvMapPipeline::GetMaterialFlags(mat);
+        const auto  envMapData = CCustomCarEnvMapPipeline::EnvMapPlGetData(mat);
+
+        RwD3D9SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+        RwD3D9SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
+
+        if (matFlags & CCustomCarEnvMapPipeline::MF_HAS_SHINE_CAM) {
+            RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, RWRSTATE(rwTEXTUREADDRESSWRAP));
+
+            auto& matTransform = StaticRef<D3DMATRIX>(0xC02C28);
+            matTransform._11 = envMapData->Scale.x;
+            matTransform._22 = envMapData->Scale.y;
+            matTransform._33 = 1.0f;
+            matTransform._44 = 1.0f;
+
+            RwD3D9SetTexture(envMapData->Texture, 1);
+
+            const auto shininess = (uint32)std::min<float>(std::floor(envMapData->Shininess * 254.0f), 255.0f);
+            const auto factor = (0xFF << 24) | (shininess << 16) | (shininess << 8) | shininess;
+            RwD3D9SetRenderState(D3DRS_TEXTUREFACTOR, factor);
+
+            RwD3D9SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_MULTIPLYADD);
+            RwD3D9SetTextureStageState(1, D3DTSS_COLORARG0, D3DTA_CURRENT);
+            RwD3D9SetTextureStageState(1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+            RwD3D9SetTextureStageState(1, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+
+            RwD3D9SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2);
+            RwD3D9SetTextureStageState(1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+            RwD3D9SetTextureStageState(1, D3DTSS_ALPHAARG2, D3DTA_CURRENT);
+
+            RwD3D9SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, 1 | D3DTSS_TCI_CAMERASPACENORMAL);
+            RwD3D9SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+
+            RwD3D9SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
+        }
+
+        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(mesh->vertexAlpha || mesh->material->color.alpha != 0xFF));
+
+        if (geoHasNoLighting) {
+            RxD3D9InstanceDataRender(header, mesh);
+        } else {
+            if (isLightingEnabled) {
+                RwD3D9SetSurfaceProperties(&mesh->material->surfaceProps, &mesh->material->color, rxGeoFlags);
+            }
+            RxD3D9InstanceDataRenderLighting(header, mesh, rxGeoFlags, mesh->material->texture);
+        }
+    }
+
+    RwD3D9SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    RwD3D9SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+    RwD3D9SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, 1);
+    RwD3D9SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
 }
 
 // 0x5D6E90
@@ -303,6 +403,6 @@ void CCustomBuildingDNPipeline::InjectHooks() {
     RH_ScopedInstall(CreateCustomObjPipe, 0x5D6750);
     RH_ScopedInstall(CustomPipeAtomicSetup, 0x5D71C0);
     RH_ScopedInstall(SetFxEnvTexture, 0x5D9570);
-    RH_ScopedInstall(CustomPipeMaterialSetup, 0x5D7120, { .Reversed = false });
-    RH_ScopedInstall(CustomPipeRenderCB, 0x5D6480, { .Reversed = false });
+    RH_ScopedInstall(CustomPipeMaterialSetup, 0x5D7120);
+    RH_ScopedInstall(CustomPipeRenderCB, 0x5D6480);
 }

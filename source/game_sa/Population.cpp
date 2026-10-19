@@ -20,6 +20,8 @@
 #include <TaskTypes/TaskComplexBeInCouple.h>
 #include <TaskTypes/TaskComplexFollowLeaderInFormation.h>
 #include <TaskTypes/TaskSimpleHoldEntity.h>
+#include <TaskTypes/TaskComplexSunbathe.h>
+#include <TaskTypes/TaskComplexWanderCriminal.h>
 
 #include <Events/EventSexyPed.h>
 #include "Events/EventAcquaintancePedHate.h"
@@ -63,10 +65,10 @@ void CPopulation::InjectHooks() {
     RH_ScopedGlobalInstall(PickRiotRoadBlockCar, 0x6144B0);
     RH_ScopedGlobalInstall(ConvertToRealObject, 0x614580);
     RH_ScopedGlobalInstall(ConvertToDummyObject, 0x614670);
-    RH_ScopedGlobalInstall(AddToPopulation, 0x614720, { .Reversed = false });
+    RH_ScopedGlobalInstall(AddToPopulation, 0x614720);
     RH_ScopedGlobalInstall(GeneratePedsAtAttractors, 0x615970);
     RH_ScopedGlobalInstall(GeneratePedsAtStartOfGame, 0x615C90);
-    RH_ScopedGlobalInstall(ManageObject, 0x615DC0, { .Reversed = false });
+    RH_ScopedGlobalInstall(ManageObject, 0x615DC0);
     RH_ScopedGlobalInstall(ManageDummy, 0x616000);
     RH_ScopedGlobalInstall(ManageAllPopulation, 0x6160A0);
     RH_ScopedGlobalInstall(ManagePopulation, 0x616190);
@@ -1577,10 +1579,218 @@ void CPopulation::ConvertToDummyObject(CObject* object) {
 }
 
 // 0x614720
-bool CPopulation::AddToPopulation(float arg0, float arg1, float arg2, float arg3) {
+bool CPopulation::AddToPopulation(float minDist1, float maxDist1, float minDist2, float maxDist2) {
     ZoneScoped;
 
-    return ((bool(__cdecl*)(float, float, float, float))0x614720)(arg0, arg1, arg2, arg3);
+    if (CGameLogic::DontCreateCivilians()) {
+        return false;
+    }
+
+    if (StaticRef<bool>(0x96917A)) {
+        return false;
+    }
+
+    const auto player = FindPlayerPed();
+    const auto playerPos = FindPlayerCentreOfWorld(CWorld::PlayerInFocus);
+    const auto wanted = FindPlayerWanted(CWorld::PlayerInFocus);
+
+    bool forceCop = false;
+    if (wanted && wanted->m_nWantedLevel > 2 && ms_nNumCop < (uint32)wanted->m_nCopsBeatingSomeone) {
+        if (!CGameLogic::GangWarFightingGoingOn()) {
+            if (!player || !(player->m_pVehicle && player->m_pVehicle->IsSubPlane())) {
+                if (CCarCtrl::NumLawEnforcerCars >= (uint32)wanted->m_nCopsInPursuit ||
+                    ((float)ms_nNumCivFemale <= (float)wanted->m_nWantedLevel * 1.0f &&
+                     (CCarCtrl::NumLawEnforcerCars + CCarCtrl::NumRandomCars + CCarCtrl::NumMissionCars +
+                      CCarCtrl::NumPermanentCars + CCarCtrl::NumAmbulancesOnDuty + CCarCtrl::NumFireTrucksOnDuty) >= 12))
+                {
+                    forceCop = true;
+                    minDist1 = PedCreationDistMultiplier() * 42.5f;
+                    maxDist1 = PedCreationDistMultiplier() * 50.5f;
+                }
+            }
+        }
+    }
+
+    if (CGameLogic::LaRiotsActiveHere()) {
+        if (CWeather::Foggyness >= 0.1f && ms_nNumCop < 1) {
+            forceCop = true;
+        }
+    }
+
+    float maxPeds = (float)MaxNumberOfPedsInUse;
+    if (CDarkel::FrenzyOnGoing()) {
+        const float popCycleDensity = CPopCycle::m_NumOther_Peds + CPopCycle::m_NumCops_Peds +
+                                      CPopCycle::m_NumGangs_Peds + CPopCycle::m_NumDealers_Peds;
+        maxPeds = std::min(maxPeds, popCycleDensity);
+    }
+
+    if (CGame::currArea != AREA_CODE_NORMAL) {
+        maxPeds = (float)NumberOfPedsInUseInterior;
+    }
+
+    const float densityFactor = (CCheat::FewerPeds() ? 0.5f : 1.0f) * PedDensityMultiplier * maxPeds;
+    if ((float)ms_nTotalPeds >= densityFactor && !forceCop) {
+        return false;
+    }
+
+    ePedType pedType = PED_TYPE_CIVMALE;
+    eModelID modelId = MODEL_MALE01;
+    int32 numPedsToCreate = 1;
+
+    if (forceCop) {
+        pedType = PED_TYPE_COP;
+    } else {
+        const bool bIsSkateable = (playerPos.z >= 0.0f);
+        if (!CPopCycle::FindNewPedType(pedType, modelId, bIsSkateable, bIsSkateable)) {
+            return false;
+        }
+
+        if (pedType == PED_TYPE_CIVMALE || pedType == PED_TYPE_CIVFEMALE) {
+            if (CGeneral::GetRandomNumberInRange(0.0f, 1.0f) < 0.2f) {
+                eModelID maleModel = MODEL_INVALID;
+                eModelID femaleModel = MODEL_INVALID;
+                ChooseCivilianCoupleOccupations(maleModel, femaleModel);
+                if (maleModel != MODEL_INVALID && femaleModel != MODEL_INVALID) {
+                    pedType = (ePedType)CModelInfo::GetPedModelInfo(maleModel)->m_nPedType;
+                }
+            }
+        }
+    }
+
+    if (m_AllRandomPedsThisType > 0) {
+        pedType = (ePedType)m_AllRandomPedsThisType;
+    }
+
+    if (pedType >= PED_TYPE_GANG1 && pedType <= PED_TYPE_GANG10) {
+        numPedsToCreate = CGeneral::GetRandomNumberInRange(1, 5);
+        minDist1 += 10.0f;
+        maxDist1 += 10.0f;
+    }
+
+    CVector nodeCoords{};
+    CNodeAddress nodeAddr1{};
+    CNodeAddress nodeAddr2{};
+    float orientation = 0.0f;
+
+    const bool bLowTraffic = (pedType == PED_TYPE_COP && wanted && wanted->m_nWantedLevel > 0);
+    plugin::CallMethod<0x44E790, CPathFind*, float, float, float, float, float, float, CVector*, CNodeAddress*, CNodeAddress*, float*, bool, CMatrix*>(
+        &ThePaths, playerPos.x, playerPos.y, minDist1, maxDist1, minDist2, maxDist2,
+        &nodeCoords, &nodeAddr1, &nodeAddr2, &orientation, bLowTraffic, nullptr
+    );
+
+    if (nodeAddr1.IsValid() && nodeAddr2.IsValid() && ThePaths.m_pPathNodes[nodeAddr1.m_wAreaId] && ThePaths.m_pPathNodes[nodeAddr2.m_wAreaId]) {
+        const auto& n1 = ThePaths.m_pPathNodes[nodeAddr1.m_wAreaId][nodeAddr1.m_wNodeId];
+        const auto& n2 = ThePaths.m_pPathNodes[nodeAddr2.m_wAreaId][nodeAddr2.m_wNodeId];
+        const uint32 minDensity = std::min<uint32>(n1.m_nDensity, n2.m_nDensity);
+        if ((CGeneral::GetRandomNumber() & 0xF) > minDensity) {
+            return false;
+        }
+    }
+
+    const uint16 seed = (uint16)CGeneral::GetRandomNumber();
+    plugin::CallMethod<0x44DA30, CPathFind*, CNodeAddress, CNodeAddress, uint16, float*, float*>(
+        &ThePaths, nodeAddr1, nodeAddr2, seed, &nodeCoords.x, &nodeCoords.y
+    );
+
+    if (pedType >= PED_TYPE_GANG1 && pedType <= PED_TYPE_GANG10) {
+        PlaceGangMembers(pedType, numPedsToCreate, nodeCoords);
+        return true;
+    }
+
+    bool pedCreated = false;
+    for (int32 i = 0; i < numPedsToCreate; i++) {
+        CVector pedPos = nodeCoords;
+        if (i > 0) {
+            pedPos.x += CGeneral::GetRandomNumberInRange(-1.5f, 1.5f);
+            pedPos.y += CGeneral::GetRandomNumberInRange(-1.5f, 1.5f);
+        }
+
+        if (!CPedPlacement::IsPositionClearForPed(pedPos, -1.0f)) {
+            continue;
+        }
+
+        bool bGroundHit = false;
+        const float groundZ = CWorld::FindGroundZFor3DCoord(pedPos.x, pedPos.y, pedPos.z + 1.0f, &bGroundHit, nullptr);
+        if (!bGroundHit) {
+            continue;
+        }
+        pedPos.z = std::max(groundZ + 1.0f, pedPos.z);
+
+        if (TheCamera.IsSphereVisible({ pedPos, 2.0f })) {
+            if ((playerPos - pedPos).Magnitude2D() < PedCreationDistMultiplier() * 42.5f) {
+                continue;
+            }
+        }
+
+        if (CModelInfo::GetPedModelInfo(modelId)->m_nAnimGroup == ANIM_GROUP_SKATE) {
+            if (!IsSkateable(pedPos)) {
+                continue;
+            }
+        }
+
+        if (IsSunbather(modelId)) {
+            if (CClock::ms_nGameClockHours < 8 || CClock::ms_nGameClockHours > 19) {
+                continue;
+            }
+        }
+
+        if (pedType == PED_TYPE_PROSTITUTE) {
+            if (FindDistanceToNearestPedOfType(PED_TYPE_PROSTITUTE, pedPos) <= 100.0f) {
+                continue;
+            }
+        }
+
+        CPed* ped = AddPed(pedType, modelId, pedPos, true);
+        if (!ped) {
+            continue;
+        }
+
+        const bool bIsSunbather = IsSunbather(modelId);
+        if (bIsSunbather && (CGeneral::GetRandomNumber() & 3) != 0) {
+            CColPoint colPoint{};
+            CEntity* hitEntity = nullptr;
+            if (CWorld::ProcessVerticalLine(pedPos + CVector(0.0f, 0.0f, 1.0f), pedPos.z - 1.0f, colPoint, hitEntity, true, false, false, false, false, false, nullptr)) {
+                if (g_surfaceInfos.IsBeach(colPoint.m_nSurfaceTypeA) || colPoint.m_nSurfaceTypeA == 34 || colPoint.m_nSurfaceTypeA == 160 || StaticRef<bool>(0x969159)) {
+                    if (plugin::CallAndReturn<bool, 0x632140>() || StaticRef<bool>(0x969159)) {
+                        CVector towelPos = colPoint.m_vecPoint;
+                        CObject* towel = plugin::CallAndReturn<CObject*, 0x6EABA0, const CVector*, int32>(&towelPos, 11);
+                        if (towel) {
+                            ped->SetHeading(CGeneral::GetRandomNumberInRange(0.0f, 1.0f) * TWO_PI);
+                            towel->SetHeading(ped->m_fCurrentRotation);
+                            CVector lotionPos = towelPos + CVector(CGeneral::GetRandomNumberInRange(-0.5f, 0.5f), CGeneral::GetRandomNumberInRange(-1.0f, 1.0f), 0.0f);
+                            plugin::CallAndReturn<CObject*, 0x6EABA0, const CVector*, int32>(&lotionPos, 6);
+                            ped->GetTaskManager().SetTask(new CTaskComplexSunbathe(towel, (CGeneral::GetRandomNumber() & 3) == 0), TASK_PRIMARY_PRIMARY);
+                            CVisibilityPlugins::SetClumpAlpha(ped->GetRpClump(), 0);
+                            pedCreated = true;
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (CGameLogic::LaRiotsActiveHere()) {
+            if ((CGeneral::GetRandomNumber() & 3) != 0) {
+                ped->GetTaskManager().SetTask(new CTaskComplexWanderCriminal(PEDMOVE_WALK, (uint8)CGeneral::GetRandomNumberInRange(0, 8)), TASK_PRIMARY_PRIMARY);
+            } else if (pedType != PED_TYPE_COP) {
+                CObject* tv = new CObject(ModelIndices::MI_TELLY, true);
+                if (tv) {
+                    CWorld::Add(tv);
+                    ped->GetTaskManager().SetTask(CTaskComplexWander::GetWanderTaskByPedType(ped), TASK_PRIMARY_PRIMARY);
+                    CVector offset{ 0.0f, 0.45f, 0.35f };
+                    ped->GetTaskManager().SetTaskSecondary(new CTaskSimpleHoldEntity(tv, &offset, 0x13e, 0x51, true, false, true), TASK_SECONDARY_PARTIAL_ANIM);
+                }
+            }
+        } else {
+            CTheScripts::ScriptsForBrains.CheckIfNewEntityNeedsScript(ped, 0, nullptr);
+            ped->GetTaskManager().SetTask(CTaskComplexWander::GetWanderTaskByPedType(ped), TASK_PRIMARY_PRIMARY);
+        }
+
+        CVisibilityPlugins::SetClumpAlpha(ped->GetRpClump(), 0);
+        pedCreated = true;
+    }
+
+    return pedCreated;
 }
 
 // 0x615970
@@ -1711,7 +1921,66 @@ void CPopulation::GeneratePedsAtStartOfGame() {
 
 // 0x615DC0
 void CPopulation::ManageObject(CObject* object, const CVector& posn) {
-    ((void(__cdecl*)(CObject*, const CVector&))0x615DC0)(object, posn);
+    if (!object->CanBeDeleted()) {
+        return;
+    }
+
+    const float dist = (object->GetPosition() - posn).Magnitude();
+
+    if (object->m_nObjectType == OBJECT_TEMPORARY) {
+        const int32 modelId = object->m_nModelIndex;
+        if (modelId == ModelIndices::MI_ROADWORKBARRIER1 ||
+            modelId == ModelIndices::MI_ROADBLOCKFUCKEDCAR1 ||
+            modelId == ModelIndices::MI_ROADBLOCKFUCKEDCAR2 ||
+            modelId == ModelIndices::MI_BEACHBALL)
+        {
+            if (dist < 120.0f) {
+                return;
+            }
+        } else if (modelId >= ModelIndices::MI_BEACHTOWEL01 && modelId <= ModelIndices::MI_BEACHTOWEL04) {
+            if (dist < 64.5f) {
+                if (dist >= 35.0f && !object->GetIsOnScreen()) {
+                    CWorld::Remove(object);
+                    delete object;
+                    return;
+                }
+                return;
+            }
+        } else {
+            if (dist < 54.5f) {
+                if (dist < 25.0f || object->GetIsOnScreen()) {
+                    if (CTimer::GetTimeInMS() <= object->m_nRemovalTime) {
+                        if (object->m_pRwObject && RwObjectGetType(object->m_pRwObject) == rpCLUMP && object->objectFlags.bFadingIn) {
+                            if (CVisibilityPlugins::GetClumpAlpha(reinterpret_cast<RpClump*>(object->m_pRwObject)) != 0 && object->IsVisible()) {
+                                return;
+                            }
+                        } else {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        CWorld::Remove(object);
+        delete object;
+        return;
+    }
+
+    float distToDummy = 100000.0f;
+    if (object->m_pDummyObject) {
+        distToDummy = (object->m_pDummyObject->GetPosition() - posn).Magnitude();
+    }
+
+    const float maxDist = (object->m_nModelIndex == ModelIndices::MI_SAMSITE || object->m_nModelIndex == ModelIndices::MI_SAMSITE2)
+        ? 750.0f
+        : 80.0f;
+
+    if (dist >= maxDist) {
+        if (FindDummyDistForModel(object->m_nModelIndex) < distToDummy) {
+            ConvertToDummyObject(object);
+        }
+    }
 }
 
 // 0x616000

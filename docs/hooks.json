@@ -5122,7 +5122,7 @@
     {
         "Category": "CPopulation",
         "Name": "AddToPopulation",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPopulation",
@@ -5137,7 +5137,7 @@
     {
         "Category": "CPopulation",
         "Name": "ManageObject",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPopulation",
@@ -15512,7 +15512,7 @@
     {
         "Category": "CRadar",
         "Name": "ClipRadarPoly",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CRadar",
@@ -15552,7 +15552,7 @@
     {
         "Category": "CRadar",
         "Name": "DrawEntityBlip",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CRadar",
@@ -32947,12 +32947,12 @@
     {
         "Category": "CCustomBuildingDNPipeline",
         "Name": "CustomPipeMaterialSetup",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CCustomBuildingDNPipeline",
         "Name": "CustomPipeRenderCB",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CCustomCarEnvMapPipeline",

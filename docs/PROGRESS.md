@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 20:12:41 UTC
+Last update was at Oct 19, 2026 at 20:56:58 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7610 out of 8295 functions done in 719 categories)
+## Stats (7616 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (644/719) [90%]
+#### Completely reversed categories (647/719) [90%]
 
 <details>
 <summary>See list of categories</summary>
@@ -82,6 +82,7 @@ Last update was at Oct 19, 2026 at 20:12:41 UTC
 - CKeyboardState (1)<br />
 - CMouseControllerState (3)<br />
 - CReferences (4)<br />
+- CPopulation (66)<br />
 - CShotInfo (5)<br />
 - SurfaceInfos_c (48)<br />
 - CRenderer (33)<br />
@@ -174,6 +175,7 @@ Last update was at Oct 19, 2026 at 20:12:41 UTC
 - CIplStore (34)<br />
 - cHandlingDataMgr (11)<br />
 - CLoadingScreen (20)<br />
+- CRadar (65)<br />
 - ModelIndices (2)<br />
 - CWaterCannons (4)<br />
 - CWaterCannon (5)<br />
@@ -572,6 +574,7 @@ Last update was at Oct 19, 2026 at 20:12:41 UTC
 - CMissionTextOffsets (1)<br />
 - CData (2)<br />
 - CKeyArray (4)<br />
+- CCustomBuildingDNPipeline (16)<br />
 - CCustomCarEnvMapPipeline (37)<br />
 - CConversations (11)<br />
 - CConversationForPed (2)<br />
@@ -661,7 +664,7 @@ Last update was at Oct 19, 2026 at 20:12:41 UTC
 
 </details>
 
-#### Partially reversed categories (70/719) [10%]
+#### Partially reversed categories (67/719) [9%]
 
 <details>
 <summary>See list of categories</summary>
@@ -669,7 +672,6 @@ Last update was at Oct 19, 2026 at 20:12:41 UTC
 - CInterestingEvents (2/7) [29%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
 - CClothesBuilder (15/23) [65%]<br />
-- CPopulation (64/66) [97%]<br />
 - CPedDamageResponseCalculator (2/7) [29%]<br />
 - CWaterLevel (25/35) [71%]<br />
 - CWeapon (35/41) [85%]<br />
@@ -687,7 +689,6 @@ Last update was at Oct 19, 2026 at 20:12:41 UTC
 - CCarEnterExit (27/32) [84%]<br />
 - CPathFind (54/62) [87%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
-- CRadar (63/65) [97%]<br />
 - CCustomBuildingRenderer (3/7) [43%]<br />
 - CProjectileInfo (1/12) [8%]<br />
 - CPools (16/19) [84%]<br />
@@ -720,7 +721,6 @@ Last update was at Oct 19, 2026 at 20:12:41 UTC
 - CTaskSimpleRunNamedAnim (4/7) [57%]<br />
 - CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
-- CCustomBuildingDNPipeline (14/16) [88%]<br />
 - CAEPedAudioEntity (16/20) [80%]<br />
 - CAEPoliceScannerAudioEntity (13/17) [76%]<br />
 - CAEScriptAudioEntity (8/19) [42%]<br />
