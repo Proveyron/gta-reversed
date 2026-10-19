@@ -9,9 +9,9 @@ void CTaskUtilityLineUpPedWithCar::InjectHooks() {
     RH_ScopedInstall(Constructor, 0x64FBB0);
     RH_ScopedInstall(Destructor, 0x64FC00);
 
-    RH_ScopedInstall(GetLocalPositionToOpenCarDoor, 0x64FC10, { .Reversed = false });
-    RH_ScopedInstall(GetPositionToOpenCarDoor, 0x650A80, { .Reversed = false });
-    RH_ScopedInstall(ProcessPed, 0x6513A0, { .Reversed = false });
+    RH_ScopedInstall(GetLocalPositionToOpenCarDoor, 0x64FC10);
+    RH_ScopedInstall(GetPositionToOpenCarDoor, 0x650A80);
+    RH_ScopedInstall(ProcessPed, 0x6513A0);
 }
 
 // 0x64FBB0
@@ -36,9 +36,8 @@ CVector CTaskUtilityLineUpPedWithCar::GetLocalPositionToOpenCarDoor(CVehicle* ve
 
 // 0x650A80
 CVector CTaskUtilityLineUpPedWithCar::GetPositionToOpenCarDoor(CVehicle* vehicle, float animProgress, CAnimBlendAssociation* assoc) {
-    CVector out;
-    plugin::CallMethodAndReturn<CVector, 0x650A80, CTaskUtilityLineUpPedWithCar*, CVector*, CVehicle*, float, CAnimBlendAssociation*>(this, &out, vehicle, animProgress, assoc);
-    return out;
+    const CVector localPos = GetLocalPositionToOpenCarDoor(vehicle, animProgress, assoc);
+    return vehicle->GetPosition() + vehicle->GetMatrix().TransformVector(localPos);
 }
 
 // 0x6513A0

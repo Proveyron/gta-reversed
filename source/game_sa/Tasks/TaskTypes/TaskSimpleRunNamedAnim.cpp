@@ -12,9 +12,9 @@ void CTaskSimpleRunNamedAnim::InjectHooks() {
 
     //RH_ScopedInstall(FinishRunAnimMovePedCB, 0x61AAA0, { .Reversed = false });
     //RH_ScopedInstall(StartAnim, 0x61BB10, { .Reversed = false });
-    RH_ScopedVMTInstall(Clone, 0x61B770, { .Reversed = false });
-    RH_ScopedVMTInstall(GetTaskType, 0x61AA90, { .Reversed = false });
-    RH_ScopedVMTInstall(ProcessPed, 0x61BF20, { .Reversed = false });
+    RH_ScopedVMTInstall(Clone, 0x61B770);
+    RH_ScopedVMTInstall(GetTaskType, 0x61AA90);
+    RH_ScopedVMTInstall(ProcessPed, 0x61BF20);
     RH_ScopedInstall(OffsetPedPosition, 0x61AB00);
 }
 
@@ -53,10 +53,48 @@ CTaskSimpleRunNamedAnim::CTaskSimpleRunNamedAnim(
 }
 
 // 0x61BF20
-
-// 0x0
 bool CTaskSimpleRunNamedAnim::ProcessPed(CPed* ped) {
-    return plugin::CallMethodAndReturn<bool, 0x61BF20>(this, ped);
+    if (m_bOffsetAvailable) {
+        OffsetPedPosition(ped);
+    }
+
+    if (m_bIsFinished) {
+        if (!m_bOffsetAtEnd) {
+            auto anim = RpAnimBlendClumpGetAssociation(ped->GetRpClump(), m_pAnimHierarchy);
+            CVector prevPos{};
+            ped->GetTransformedBonePosition(prevPos, BONE_ROOT, false);
+            if (m_fBlendDelta <= 0.0f && anim) {
+                if ((ped->GetPosition() - prevPos).Magnitude() <= 1.0f) {
+                    anim->m_nFlags |= ANIM_FLAG_FREEZE_LAST_FRAME;
+                    anim->m_fBlendDelta = -4.0f;
+                }
+            }
+        }
+        return true;
+    }
+
+    if (!m_pAnimHierarchy || !m_pAnimHierarchy->m_pSequences) {
+        return true;
+    }
+
+    if (m_bDontInterrupt && (m_animFlags & 8) && (m_animFlags & 2)) {
+        ped->GetIntelligence()->GetEventGroup().Flush(false);
+    }
+
+    if (m_Timer.m_bStarted && m_Timer.IsOutOfTime()) {
+        if (m_animFlags & 8) {
+            MakeAbortable(ped, ABORT_PRIORITY_LEISURE, nullptr);
+        }
+    }
+
+    if (!m_pAnimBlendAssoc) {
+        auto anim = RpAnimBlendClumpGetAssociation(ped->GetRpClump(), m_pAnimHierarchy);
+        if (!anim || !anim->m_pPrev) {
+            plugin::CallMethod<0x61BB10, CTaskSimpleRunNamedAnim*, CPed*>(this, ped);
+        }
+    }
+
+    return m_bIsFinished;
 }
 
 // 0x61AB00

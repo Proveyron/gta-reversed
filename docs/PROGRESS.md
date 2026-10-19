@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 21:06:24 UTC
+Last update was at Oct 19, 2026 at 21:12:06 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7622 out of 8295 functions done in 719 categories)
+## Stats (7628 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (649/719) [90%]
+#### Completely reversed categories (651/719) [91%]
 
 <details>
 <summary>See list of categories</summary>
@@ -505,6 +505,7 @@ Last update was at Oct 19, 2026 at 21:06:24 UTC
 - CTaskComplexFallAndGetUp (9)<br />
 - CTaskComplexFollowNodeRoute (19)<br />
 - CTaskSimpleHitHead (4)<br />
+- CTaskUtilityLineUpPedWithCar (5)<br />
 - CTaskSimpleLand (6)<br />
 - CTaskSimpleJetPack (14)<br />
 - CTaskSimpleJump (8)<br />
@@ -534,6 +535,7 @@ Last update was at Oct 19, 2026 at 21:06:24 UTC
 - CTaskComplexTreatAccident (7)<br />
 - CTaskComplexGoToPointAndStandStillTimed (6)<br />
 - CTaskComplexPartnerShove (1)<br />
+- CTaskSimpleRunNamedAnim (7)<br />
 - CTaskComplexStuckInAir (6)<br />
 - CTaskSimpleHoldEntity (14)<br />
 - CTaskSimpleGoTo (4)<br />
@@ -666,7 +668,7 @@ Last update was at Oct 19, 2026 at 21:06:24 UTC
 
 </details>
 
-#### Partially reversed categories (65/719) [9%]
+#### Partially reversed categories (63/719) [9%]
 
 <details>
 <summary>See list of categories</summary>
@@ -713,12 +715,10 @@ Last update was at Oct 19, 2026 at 21:06:24 UTC
 - CTaskComplexWaitForBus (2/7) [29%]<br />
 - CTaskSimpleCarDrive (7/13) [54%]<br />
 - CTaskComplexFollowLeaderInFormation (1/7) [14%]<br />
-- CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
 - CTaskComplexSunbathe (2/8) [25%]<br />
 - CTaskComplexWalkRoundCar (9/13) [69%]<br />
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
-- CTaskSimpleRunNamedAnim (4/7) [57%]<br />
 - CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - CAEPedAudioEntity (16/20) [80%]<br />

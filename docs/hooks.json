@@ -30082,17 +30082,17 @@
     {
         "Category": "CTaskUtilityLineUpPedWithCar",
         "Name": "GetLocalPositionToOpenCarDoor",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskUtilityLineUpPedWithCar",
         "Name": "GetPositionToOpenCarDoor",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskUtilityLineUpPedWithCar",
         "Name": "ProcessPed",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimpleLand",
@@ -31262,17 +31262,17 @@
     {
         "Category": "CTaskSimpleRunNamedAnim",
         "Name": "Clone",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimpleRunNamedAnim",
         "Name": "GetTaskType",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimpleRunNamedAnim",
         "Name": "ProcessPed",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimpleRunNamedAnim",
