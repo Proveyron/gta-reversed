@@ -30,7 +30,7 @@ public:
     static void InjectHooks();
 
     static void SetSaveDirectory(const char* path);
-    void GenerateGameFilename(int32 slot, char* out);
+    static void __stdcall GenerateGameFilename(int32 slot, char* out);
     void PopulateSlotInfo();
     uint32 SaveSlot(int32 slot);
     bool DeleteSlot(int32 slot);

@@ -2497,7 +2497,7 @@
     {
         "Category": "C_PcSave",
         "Name": "GenerateGameFilename",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "C_PcSave",

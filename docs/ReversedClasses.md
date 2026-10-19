@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:35:15 UTC
+Last update was at Oct 19, 2026 at 15:39:09 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7542 out of 8295 functions done in 719 categories)
+## Stats (7543 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (591/719) [82%]
+#### Completely reversed categories (592/719) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -43,6 +43,7 @@ Last update was at Oct 19, 2026 at 15:35:15 UTC
 - COnscreenCounterEntry (2)<br />
 - CPedPlacement (3)<br />
 - CWindModifiers (2)<br />
+- C_PcSave (5)<br />
 - CWorld (95)<br />
 - CStreamingInfo (7)<br />
 - CStreaming (94)<br />
@@ -608,7 +609,7 @@ Last update was at Oct 19, 2026 at 15:35:15 UTC
 
 </details>
 
-#### Partially reversed categories (121/719) [17%]
+#### Partially reversed categories (120/719) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -622,7 +623,6 @@ Last update was at Oct 19, 2026 at 15:35:15 UTC
 - CRope (5/7) [71%]<br />
 - CRopes (9/11) [82%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
-- C_PcSave (4/5) [80%]<br />
 - CFileLoader (47/48) [98%]<br />
 - CClothesBuilder (15/23) [65%]<br />
 - CClothes (10/11) [91%]<br />

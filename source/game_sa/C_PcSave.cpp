@@ -13,9 +13,8 @@ void C_PcSave::InjectHooks() {
     RH_ScopedClass(C_PcSave);
     RH_ScopedCategoryGlobal();
 
-    // See note in CGenericGameStorage::InjectHooks as to why GenerateGameFilename is unhooked by default
     RH_ScopedInstall(SetSaveDirectory, 0x619040);
-    RH_ScopedInstall(GenerateGameFilename, 0x6190A0, { .Reversed = false }); // bad
+    RH_ScopedInstall(GenerateGameFilename, 0x6190A0);
     RH_ScopedInstall(PopulateSlotInfo, 0x619140);
     RH_ScopedInstall(SaveSlot, 0x619060);
     RH_ScopedInstall(DeleteSlot, 0x6190D0);
@@ -27,7 +26,7 @@ void C_PcSave::SetSaveDirectory(const char* path) {
 }
 
 // 0x6190A0
-void C_PcSave::GenerateGameFilename(int32 slot, char* out) {
+void __stdcall C_PcSave::GenerateGameFilename(int32 slot, char* out) {
     assert(slot < MAX_SAVEGAME_SLOTS);
 
     const auto maxSize = std::size(DefaultPCSaveFileName) + std::size(std::to_string(MAX_SAVEGAME_SLOTS)) + std::size(".b") - 2u;
