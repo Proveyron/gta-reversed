@@ -15842,7 +15842,7 @@
     {
         "Category": "CPickups",
         "Name": "CreatePickupCoorsCloseToCoors-",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPickups",
@@ -15872,7 +15872,7 @@
     {
         "Category": "CPickups",
         "Name": "DoPickUpEffects",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPickups",
@@ -23652,7 +23652,7 @@
     {
         "Category": "CTaskComplexUseClosestFreeScriptedAttractor",
         "Name": "ComputeClosestFreeScriptedEffect",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexUseClosestFreeScriptedAttractor",
@@ -23672,7 +23672,7 @@
     {
         "Category": "CTaskComplexUseClosestFreeScriptedAttractor",
         "Name": "CreateFirstSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexUseClosestFreeScriptedAttractor",

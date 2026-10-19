@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 20:00:51 UTC
+Last update was at Oct 19, 2026 at 20:12:41 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7606 out of 8295 functions done in 719 categories)
+## Stats (7610 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (642/719) [89%]
+#### Completely reversed categories (644/719) [90%]
 
 <details>
 <summary>See list of categories</summary>
@@ -182,6 +182,7 @@ Last update was at Oct 19, 2026 at 20:00:51 UTC
 - CPlaneTrail (3)<br />
 - CPlaneTrails (4)<br />
 - CPickup (12)<br />
+- CPickups (37)<br />
 - CPedIK (9)<br />
 - CCustomBuildingPipeline (7)<br />
 - Securom (2)<br />
@@ -335,6 +336,7 @@ Last update was at Oct 19, 2026 at 20:00:51 UTC
 - CTaskAllocatorPlayerCommandAttack (3)<br />
 - CTaskComplexUseClosestFreeScriptedAttractorRun (4)<br />
 - CTaskComplexUseClosestFreeScriptedAttractorSprint (4)<br />
+- CTaskComplexUseClosestFreeScriptedAttractor (8)<br />
 - CTaskSimpleChoking (7)<br />
 - CTaskComplexEvasiveDiveAndGetUp (9)<br />
 - CTaskSimpleLeaveGroup (2)<br />
@@ -659,7 +661,7 @@ Last update was at Oct 19, 2026 at 20:00:51 UTC
 
 </details>
 
-#### Partially reversed categories (72/719) [10%]
+#### Partially reversed categories (70/719) [10%]
 
 <details>
 <summary>See list of categories</summary>
@@ -686,7 +688,6 @@ Last update was at Oct 19, 2026 at 20:00:51 UTC
 - CPathFind (54/62) [87%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
 - CRadar (63/65) [97%]<br />
-- CPickups (35/37) [95%]<br />
 - CCustomBuildingRenderer (3/7) [43%]<br />
 - CProjectileInfo (1/12) [8%]<br />
 - CPools (16/19) [84%]<br />
@@ -697,7 +698,6 @@ Last update was at Oct 19, 2026 at 20:00:51 UTC
 - CPed (137/145) [94%]<br />
 - CPlayerPed (50/65) [77%]<br />
 - CEventHandler (69/72) [96%]<br />
-- CTaskComplexUseClosestFreeScriptedAttractor (6/8) [75%]<br />
 - CTaskGangHasslePed (2/5) [40%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
