@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:59:07 UTC
+Last update was at Oct 19, 2026 at 16:03:23 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7550 out of 8295 functions done in 719 categories)
+## Stats (7551 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (599/719) [83%]
+#### Completely reversed categories (600/719) [83%]
 
 <details>
 <summary>See list of categories</summary>
@@ -51,6 +51,7 @@ Last update was at Oct 19, 2026 at 15:59:07 UTC
 - CMirrors (8)<br />
 - CFire (5)<br />
 - CExplosion (12)<br />
+- CClothes (11)<br />
 - CBulletInfo (4)<br />
 - CRestart (11)<br />
 - CSetPiece (3)<br />
@@ -616,7 +617,7 @@ Last update was at Oct 19, 2026 at 15:59:07 UTC
 
 </details>
 
-#### Partially reversed categories (113/719) [16%]
+#### Partially reversed categories (112/719) [16%]
 
 <details>
 <summary>See list of categories</summary>
@@ -632,7 +633,6 @@ Last update was at Oct 19, 2026 at 15:59:07 UTC
 - CGenericGameStorage (5/19) [26%]<br />
 - CFileLoader (47/48) [98%]<br />
 - CClothesBuilder (15/23) [65%]<br />
-- CClothes (10/11) [91%]<br />
 - CPopulation (64/66) [97%]<br />
 - CPedGroupIntelligence (26/27) [96%]<br />
 - CCollision (59/61) [97%]<br />
