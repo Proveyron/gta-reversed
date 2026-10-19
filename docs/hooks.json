@@ -12762,7 +12762,7 @@
     {
         "Category": "CCustomCarPlateMgr",
         "Name": "LoadPlatecharsetDat",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CDraw",

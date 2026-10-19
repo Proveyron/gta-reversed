@@ -22,7 +22,7 @@ void CCustomCarPlateMgr::InjectHooks() {
     RH_ScopedInstall(AtomicSetCarplateTextureCB, 0x6FE0D0);
     RH_ScopedInstall(SetupClump, 0x6FE0F0);
     RH_ScopedInstall(RenderLicenseplateTextToRaster, 0x6FDD70);
-    RH_ScopedInstall(LoadPlatecharsetDat, 0x6FDC00, { .Reversed = false });
+    RH_ScopedInstall(LoadPlatecharsetDat, 0x6FDC00);
 }
 
 // 0x6FD500
@@ -93,9 +93,53 @@ int8 CCustomCarPlateMgr::GetMapRegionPlateDesign() {
 }
 
 // 0x6FDC00
-// unused
 int8 CCustomCarPlateMgr::LoadPlatecharsetDat(const char* filename, uint8* data) {
-    return plugin::CallAndReturn<int8, 0x6FDC00, const char*, uint8*>(filename, data);
+    CFileMgr::SetDir("DATA");
+    auto* file = CFileMgr::OpenFile(filename, "r");
+    CFileMgr::SetDir("");
+#if FIX_BUGS
+    if (!file) {
+        return false;
+    }
+#endif
+
+    for (const char* line = CFileLoader::LoadLine(file); line; line = CFileLoader::LoadLine(file)) {
+        if (strncmp(line, ";the end", 8) == 0) {
+            break;
+        }
+
+        if (line[0] == ';') {
+            continue;
+        }
+
+        char lineBuf[256];
+        strcpy_s(lineBuf, line);
+
+        char* context = nullptr;
+        char* token = strtok_s(lineBuf, " \t", &context);
+
+        uint32 tokenIdx = 0;
+        uint8 rgb[3]{};
+        while (token) {
+            if (tokenIdx < 3) {
+                const auto val = atoi(token);
+                rgb[tokenIdx] = static_cast<uint8>(std::min(val, 255));
+            }
+            tokenIdx++;
+            token = strtok_s(nullptr, " \t", &context);
+        }
+
+        if (tokenIdx < 3) {
+            CFileMgr::CloseFile(file);
+            return false;
+        }
+
+        *reinterpret_cast<uint32*>(data) = 0x8000'0000u | (static_cast<uint32>(rgb[2]) << 16) | (static_cast<uint32>(rgb[1]) << 8) | static_cast<uint32>(rgb[0]);
+        data += 4;
+    }
+
+    CFileMgr::CloseFile(file);
+    return true;
 }
 
 auto ResolvePlateType(uint8 plateType) {

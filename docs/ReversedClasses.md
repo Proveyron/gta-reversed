@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:28:35 UTC
+Last update was at Oct 19, 2026 at 15:30:58 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7538 out of 8295 functions done in 719 categories)
+## Stats (7539 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (589/719) [82%]
+#### Completely reversed categories (590/719) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -129,6 +129,7 @@ Last update was at Oct 19, 2026 at 15:28:35 UTC
 - CClock (9)<br />
 - CCoronas (11)<br />
 - CRegisteredCorona (1)<br />
+- CCustomCarPlateMgr (15)<br />
 - CDraw (2)<br />
 - CEntryExitManager (18)<br />
 - CInformGroupEvent (3)<br />
@@ -606,7 +607,7 @@ Last update was at Oct 19, 2026 at 15:28:35 UTC
 
 </details>
 
-#### Partially reversed categories (122/719) [17%]
+#### Partially reversed categories (121/719) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -642,7 +643,6 @@ Last update was at Oct 19, 2026 at 15:28:35 UTC
 - CRoadBlocks (7/8) [88%]<br />
 - CPedGroups (2/11) [18%]<br />
 - CClouds (20/21) [95%]<br />
-- CCustomCarPlateMgr (14/15) [93%]<br />
 - CEntryExit (10/11) [91%]<br />
 - CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
