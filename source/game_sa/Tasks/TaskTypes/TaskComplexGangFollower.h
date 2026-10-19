@@ -36,6 +36,7 @@ public:
     CTask* ControlSubTask(CPed* ped) override;
 
     CVector CalculateOffsetPosition();
+    void SetFollowerFollowsInCar(bool enable);
 
 private:
     friend void InjectHooksMain();

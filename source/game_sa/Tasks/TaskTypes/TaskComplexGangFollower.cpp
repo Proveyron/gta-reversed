@@ -14,6 +14,7 @@ void CTaskComplexGangFollower::InjectHooks() {
     RH_ScopedInstall(CreateNextSubTask, 0x665E00, { .Reversed = false });
     RH_ScopedInstall(CreateFirstSubTask, 0x666160, { .Reversed = false });
     RH_ScopedInstall(ControlSubTask, 0x662A10, { .Reversed = false });
+    RH_ScopedInstall(SetFollowerFollowsInCar, 0x65EE90);
 }
 
 // 0x65EAA0
@@ -57,4 +58,13 @@ CTask* CTaskComplexGangFollower::CreateFirstSubTask(CPed* ped) {
 // 0x662A10
 CTask* CTaskComplexGangFollower::ControlSubTask(CPed* ped) {
     return plugin::CallMethodAndReturn<CTask*, 0x662A10, CTaskComplexGangFollower*, CPed*>(this, ped);
+}
+
+// 0x65EE90
+void CTaskComplexGangFollower::SetFollowerFollowsInCar(bool enable) {
+    if (enable) {
+        m_Flags |= 4;
+    } else {
+        m_Flags &= ~4;
+    }
 }

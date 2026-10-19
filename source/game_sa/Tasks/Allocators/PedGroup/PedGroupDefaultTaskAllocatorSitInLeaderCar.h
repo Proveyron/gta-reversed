@@ -40,11 +40,15 @@ public:
             new CTaskSimpleCarDrive{veh} // 0x5F7074
         });
         size_t seat{};
-        for (auto&& [i, mem] : rngv::enumerate(pedGroup->GetMembership().GetFollowers())) {
+        for (auto i = 0u; i < CPedGroupMembership::LEADER_MEM_ID; ++i) {
+            auto* const mem = pedGroup->GetMembership().GetMember(i);
+            if (!mem) {
+                continue;
+            }
             if (seat >= veh->m_nMaxPassengers) {
                 break;
             }
-            SetPedDefaultTask(leader, CPedGroupMembership::LEADER_MEM_ID, new CTaskComplexSequence{
+            SetPedDefaultTask(mem, i, new CTaskComplexSequence{
                 new CTaskComplexEnterCarAsPassenger{veh, CCarEnterExit::ComputeTargetDoorToEnterAsPassenger(veh, seat++)}, // 0x5F714B
                 new CTaskSimpleCarDrive{veh} // 0x5F7184
             });
@@ -56,7 +60,7 @@ public:
         RH_ScopedVirtualClass(CPedGroupDefaultTaskAllocatorSitInLeaderCar, 0x86C784, 2);
         RH_ScopedCategory("Tasks/Allocators/PedGroup");
 
-        RH_ScopedVMTInstall(AllocateDefaultTasks, 0x5F6FC0, { .Reversed = false });
+        RH_ScopedVMTInstall(AllocateDefaultTasks, 0x5F6FC0);
         RH_ScopedVMTInstall(GetType, 0x5F6560);
     }
 };

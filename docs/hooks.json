@@ -1597,7 +1597,7 @@
     {
         "Category": "CMenuSystem",
         "Name": "FillGridWithCarColours",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CMenuSystem",
@@ -23442,7 +23442,7 @@
     {
         "Category": "CPedGroupDefaultTaskAllocatorSitInLeaderCar",
         "Name": "AllocateDefaultTasks",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPedGroupDefaultTaskAllocatorSitInLeaderCar",
@@ -23452,7 +23452,7 @@
     {
         "Category": "CPedGroupDefaultTaskAllocatorRandom",
         "Name": "AllocateDefaultTasks",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPedGroupDefaultTaskAllocatorRandom",
@@ -23712,7 +23712,7 @@
     {
         "Category": "CTaskSimpleChoking",
         "Name": "ProcessPed",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexEvasiveDiveAndGetUp",
@@ -23927,7 +23927,7 @@
     {
         "Category": "CTaskLeanOnVehicle",
         "Name": "ProcessPed",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexCarSlowBeDraggedOut",
@@ -28092,7 +28092,7 @@
     {
         "Category": "CTaskSimpleFightingControl",
         "Name": "ProcessPed",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskSimpleFinishBrain",
@@ -32637,7 +32637,7 @@
     {
         "Category": "RpAnimBlend",
         "Name": "RpAnimBlendClumpUpdateAnimations",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "RpAnimBlend",

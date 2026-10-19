@@ -26,7 +26,7 @@ void CMenuSystem::InjectHooks() {
     RH_ScopedInstall(CreateNewMenu, 0x582300);
     RH_ScopedInstall(ActivateItems, 0x581990);
     RH_ScopedInstall(ActivateOneItem, 0x581B30);
-    RH_ScopedInstall(FillGridWithCarColours, 0x5820E0, { .Reversed = false });
+    RH_ScopedInstall(FillGridWithCarColours, 0x5820E0);
     RH_ScopedInstall(InsertMenu, 0x581E00);
     RH_ScopedInstall(SwitchOffMenu, 0x580750);
 }
@@ -603,7 +603,45 @@ void CMenuSystem::ActivateOneItem(MenuId id, uint8 row, bool enable) {
 
 // 0x5820E0
 void CMenuSystem::FillGridWithCarColours(MenuId id) {
-    plugin::Call<0x5820E0, MenuId>(id);
+    std::array<CRGBA, MENU_CAR_COLOR_COUNT> colors{};
+    for (auto& color : colors) {
+        color = CRGBA{ 0, 0, 0, 255 };
+    }
+
+    uint8 colorId = 0;
+    uint8 slot = 0;
+    uint8 count = 1;
+
+    while (count <= MENU_CAR_COLOR_COUNT) {
+        CRGBA currentColor = CVehicleModelInfo::ms_vehicleColourTable[colorId];
+        currentColor.a = 255;
+        const uint8 originalColorId = colorId;
+
+        bool similarFound = false;
+        for (auto i = 0u; i < count; ++i) {
+            if (count > 1) {
+                if (currentColor.r > colors[i].r - 15 && currentColor.r < colors[i].r + 15
+                    && currentColor.g > colors[i].g - 15 && currentColor.g < colors[i].g + 15
+                    && currentColor.b > colors[i].b - 15 && currentColor.b < colors[i].b + 15) {
+                    similarFound = true;
+                }
+            }
+        }
+
+        if (similarFound) {
+            colorId++;
+            if (colorId < 128) {
+                continue;
+            }
+            colorId = originalColorId;
+        }
+
+        colors[slot] = currentColor;
+        MenuNumber[id]->m_anUsedCarColors[slot] = colorId;
+        slot++;
+        count++;
+        colorId = 0;
+    }
 }
 
 // Insert menu column

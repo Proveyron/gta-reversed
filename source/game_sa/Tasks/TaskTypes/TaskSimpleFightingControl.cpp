@@ -22,7 +22,7 @@ void CTaskSimpleFightingControl::InjectHooks() {
     RH_ScopedVMTInstall(Clone, 0x622EB0);
     RH_ScopedVMTInstall(GetTaskType, 0x61DC90);
     RH_ScopedVMTInstall(MakeAbortable, 0x61DD00);
-    RH_ScopedVMTInstall(ProcessPed, 0x62A0A0, { .Reversed = false });
+    RH_ScopedVMTInstall(ProcessPed, 0x62A0A0);
 }
 
 // 0x61DC10
@@ -174,42 +174,73 @@ bool CTaskSimpleFightingControl::MakeAbortable(CPed* ped, eAbortPriority priorit
 
 // 0x62A0A0
 bool CTaskSimpleFightingControl::ProcessPed(CPed* ped) {
-    return plugin::CallMethodAndReturn<bool, 0x62A0A0, CTaskSimpleFightingControl*, CPed*>(this, ped);
-
-    /*
-    * Code below should be good so far, I'm lazy to finish it
-    if (!m_target) {
-        return false;
-    }
-
-    if (m_bool) {
+    if (!m_target || m_bool) {
         return true;
     }
 
-    const auto pedShootingRange = [ped] {
-        const auto range = (int16)ped->m_nWeaponShootingRate;
-        if (!ped->IsCreatedByMission() && ped->m_nPedType != PED_TYPE_COP && range == 40) {
-            return ped->m_pStats->m_wShootingRate;
+    const auto pedShootingRate = [&] {
+        const auto rate = static_cast<float>(ped->m_nWeaponShootingRate);
+        if (ped->m_nCreatedBy != PED_MISSION && ped->m_nPedType != PED_TYPE_COP && ped->m_nWeaponShootingRate == 40) {
+            return static_cast<float>(ped->m_pStats->m_wShootingRate);
         }
-        return range;
+        return rate;
     }();
 
     ped->GiveWeaponAtStartOfFight();
 
     // Create fight task for ped if not already
-    if (!ped->GetTaskManager().GetTaskSecondary(TASK_SECONDARY_ATTACK)) {
-        ped->GetTaskManager().SetTaskSecondary(new CTaskSimpleFight{ m_target, false, (uint32)FIGHT_CTRL_FIGHT_IDLE_TIME }, TASK_SECONDARY_ATTACK);
+    auto* pedFightTask = static_cast<CTaskSimpleFight*>(ped->GetTaskManager().GetTaskSecondary(TASK_SECONDARY_ATTACK));
+    if (!pedFightTask) {
+        pedFightTask = new CTaskSimpleFight{ m_target, false, static_cast<uint32>(FIGHT_CTRL_FIGHT_IDLE_TIME) };
+        ped->GetTaskManager().SetTaskSecondary(pedFightTask, TASK_SECONDARY_ATTACK);
         m_nextAttackTime = 0;
-    }
-
-    const auto pedFightTask = ped->GetTaskManager().GetTaskSecondary(TASK_SECONDARY_ATTACK);
-    if (pedFightTask->GetTaskType() != TASK_SIMPLE_FIGHT) {
+    } else if (pedFightTask->GetTaskType() != TASK_SIMPLE_FIGHT) {
         pedFightTask->MakeAbortable(ped);
         return false;
     }
 
+    uint8 moveCmd = 0;
     if (m_nextAttackTime <= CTimer::GetTimeInMS()) {
         m_nextAttackTime = 0;
+        if (ped->m_nFightState == 4 || ped->GetActiveWeapon().m_nType == WEAPON_UNARMED) {
+            moveCmd = 11;
+        } else {
+            moveCmd = 12;
+        }
+    } else {
+        if (m_target->m_nStatus == STATUS_PLAYER && m_someTime == 0) {
+            const auto randVal = CGeneral::GetRandomNumberInRange(0.0f, 100.0f);
+            if (randVal <= 0.01f * pedShootingRate * 2.0f) {
+                m_someTime = CGeneral::GetRandomNumberInRange<uint32>(500, 2000);
+                moveCmd = 2;
+            }
+        } else if (m_someTime > 0) {
+            const auto stepMs = static_cast<uint32>(CTimer::GetTimeStepInMS());
+            if (m_someTime > stepMs) {
+                m_someTime -= stepMs;
+            } else {
+                m_someTime = 0;
+            }
+            moveCmd = 2;
+        }
     }
-    */
+
+    const auto comboIdx = std::max(0, static_cast<int32>(pedFightTask->m_nComboSet) - 4);
+    m_maxAttackRange = CTaskSimpleFight::m_aComboData[comboIdx].m_fRanges;
+
+    if (m_nextAttackTime == 0) {
+        const auto randMult = CGeneral::GetRandomNumberInRange(0.5f, 1.5f);
+        const auto divisor = 0.1f + pedShootingRate * m_unk3 * 0.0001f;
+        m_nextAttackTime = CTimer::GetTimeInMS() + static_cast<uint32>((randMult / divisor) * 2000.0f);
+    }
+
+    if (pedFightTask->m_nComboSet <= 1) {
+        const auto calcCmd = CalcMoveCommand(ped);
+        if (calcCmd > 0) {
+            moveCmd = static_cast<uint8>(calcCmd);
+        }
+    }
+
+    pedFightTask->ControlFight(m_target, moveCmd);
+    return false;
 }

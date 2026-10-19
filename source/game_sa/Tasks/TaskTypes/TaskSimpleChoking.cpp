@@ -52,7 +52,56 @@ bool CTaskSimpleChoking::MakeAbortable(CPed* ped, eAbortPriority priority, const
 
 // 0x620490
 bool CTaskSimpleChoking::ProcessPed(CPed* ped) {
-    return plugin::CallMethodAndReturn<bool, 0x620490, CTaskSimpleChoking*, CPed*>(this, ped);
+    if (m_bIsFinished) {
+        return true;
+    }
+
+    if (m_pAttacker && !ped->IsPlayer() && !m_bIsTeargas) {
+        const auto diff = m_pAttacker->GetPosition() - ped->GetPosition();
+        if (DotProduct(diff, ped->GetUp()) >= 0.0f) {
+            ped->m_fAimingRotation = std::atan2(-diff.x, diff.y);
+        }
+    }
+
+    const auto stepMs = static_cast<uint32>(CTimer::GetTimeStepInMS());
+    if (m_nTimeRemaining > stepMs) {
+        m_nTimeRemaining -= stepMs;
+    } else {
+        m_nTimeRemaining = 0;
+    }
+
+    if (!m_pAnim) {
+        m_pAnim = CAnimManager::BlendAnimation(ped->GetRpClump(), ANIM_GROUP_DEFAULT, ANIM_ID_GAS_CWR, 4.0f);
+        m_pAnim->SetFinishCallback([](CAnimBlendAssociation* a, void* data) {
+            const auto self = static_cast<CTaskSimpleChoking*>(data);
+            self->m_pAnim = nullptr;
+            self->m_bIsFinished = true;
+        }, this);
+        m_pAnim->SetSpeed(CGeneral::GetRandomNumberInRange(0.8f, 1.1f));
+    } else if (m_nTimeRemaining == 0) {
+        if (m_pAnim->m_AnimId == ANIM_ID_GAS_CWR) {
+            m_pAnim->SetDefaultFinishCallback();
+            m_pAnim = CAnimManager::BlendAnimation(ped->GetRpClump(), ANIM_GROUP_DEFAULT, ANIM_ID_IDLE_TIRED, 4.0f);
+            m_pAnim->SetFinishCallback([](CAnimBlendAssociation* a, void* data) {
+                const auto self = static_cast<CTaskSimpleChoking*>(data);
+                self->m_pAnim = nullptr;
+                self->m_bIsFinished = true;
+            }, this);
+
+            const auto timeElapsed = CTimer::GetTimeInMS() - m_nTimeStarted;
+            if (timeElapsed < CGeneral::GetRandomNumberInRange<uint32>(8000, 12000)) {
+                m_nTimeRemaining = timeElapsed;
+            } else {
+                m_nTimeRemaining = CGeneral::GetRandomNumberInRange<uint32>(8000, 12000);
+            }
+        } else {
+            m_pAnim->m_BlendDelta = -4.0f;
+            m_pAnim->SetFlag(ANIMATION_IS_BLEND_AUTO_REMOVE);
+        }
+    }
+
+    ped->Say(CTX_GLOBAL_PAIN_COUGH);
+    return false;
 }
 
 // 0x620660
@@ -69,7 +118,7 @@ void CTaskSimpleChoking::UpdateChoke(CPed* victim, CPed* attacker, bool bIsTearg
             const auto self = static_cast<CTaskSimpleChoking*>(data);
             self->m_bIsFinished = true;
             self->m_pAnim = nullptr;
-        });
+        }, this);
         m_pAnim->SetSpeed(CGeneral::GetRandomNumberInRange(0.8f, 1.1f));
         m_nTimeStarted = CTimer::GetTimeInMS() - m_nTimeRemaining;
     }
@@ -88,5 +137,5 @@ void CTaskSimpleChoking::InjectHooks() {
     RH_ScopedVMTInstall(Clone, 0x623220);
     RH_ScopedVMTInstall(GetTaskType, 0x620360);
     RH_ScopedVMTInstall(MakeAbortable, 0x6203F0);
-    RH_ScopedVMTInstall(ProcessPed, 0x620490, { .Reversed = false });
+    RH_ScopedVMTInstall(ProcessPed, 0x620490);
 }
