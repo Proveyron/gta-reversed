@@ -4,9 +4,11 @@
 
 class CEntity;
 
-enum class eIdleCamZoomState {
-    UNK_2 = 2,
-    UNK_3 = 3,
+enum class eIdleCamZoomState : int32 {
+    ZOOMING_IN  = 0,
+    ZOOMING_OUT = 1,
+    UNK_2       = 2,
+    UNK_3       = 3,
 };
 
 class CIdleCam {
