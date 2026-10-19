@@ -8,6 +8,7 @@
 #include "CarEnterExit.h"
 #include "General.h"
 #include "Timer.h"
+#include "PedGeometryAnalyser.h"
 
 void CTaskComplexWalkRoundCar::InjectHooks() {
     RH_ScopedVirtualClass(CTaskComplexWalkRoundCar, 0x86f308, 11);
@@ -18,9 +19,9 @@ void CTaskComplexWalkRoundCar::InjectHooks() {
 
     RH_ScopedInstall(SetNewVehicle, 0x654290);
     RH_ScopedInstall(CreateRouteTask, 0x6542E0);
-    RH_ScopedInstall(ComputeRouteRoundSmallCar, 0x6544F0, { .Reversed = false });
+    RH_ScopedInstall(ComputeRouteRoundSmallCar, 0x6544F0);
     RH_ScopedInstall(GoingForDoor, 0x654720);
-    RH_ScopedInstall(ComputeRouteRoundBigCar, 0x656BB0, { .Reversed = false });
+    RH_ScopedInstall(ComputeRouteRoundBigCar, 0x656BB0);
     RH_ScopedInstall(ComputeRoute, 0x657B80);
 
     RH_ScopedVMTInstall(Clone, 0x655B00);
@@ -83,12 +84,99 @@ CTask* CTaskComplexWalkRoundCar::CreateRouteTask(CPed*) const {
 
 // 0x6544F0
 float CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar(CPed* ped) {
-    return plugin::CallMethodAndReturn<float, 0x6544F0, CTaskComplexWalkRoundCar*, CPed*>(this, ped);
+    CVector corners[4];
+    CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners(ped->GetPosition().z, *m_Veh, corners);
+
+    CVector outPlanes[4];
+    float outPlanesDot[4];
+    CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes(ped->GetPosition().z, *m_Veh, &outPlanes, outPlanesDot);
+
+    const int32 hitSide = CPedGeometryAnalyser::ComputeEntityHitSide(*ped, *m_Veh);
+    float hitSideDist = 0.0f;
+    if (hitSide != -1) {
+        hitSideDist = DotProduct(outPlanes[hitSide], ped->GetPosition()) + outPlanesDot[hitSide];
+    }
+
+    if (m_bIsPedGoingForCarDoor) {
+        int32 outsidePlane = -1;
+        for (int32 i = 0; i < 4; ++i) {
+            const float planeDist = DotProduct(outPlanes[i], m_TargetPt) + outPlanesDot[i];
+            if (planeDist < 0.0f) {
+                outsidePlane = i;
+                break;
+            }
+        }
+
+        if (outsidePlane == -1) {
+            const int32 targetHitSide = CPedGeometryAnalyser::ComputeEntityHitSide(m_TargetPt, *m_Veh);
+            if (targetHitSide != -1) {
+                const float targetDistToPlane = DotProduct(outPlanes[targetHitSide], m_TargetPt) + outPlanesDot[targetHitSide];
+                m_TargetPt += outPlanes[targetHitSide] * (0.05f - targetDistToPlane);
+            }
+        }
+    }
+
+    const int32 dir = CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(*ped, *m_Veh, m_TargetPt, *m_Route, m_ForceThisDirectionRoundCar);
+    m_DirectionGoingRoundCar = static_cast<uint8>(dir);
+
+    return hitSideDist;
 }
 
 // 0x656BB0
 float CTaskComplexWalkRoundCar::ComputeRouteRoundBigCar(CPed* ped) {
-    return plugin::CallMethodAndReturn<float, 0x656BB0, CTaskComplexWalkRoundCar*, CPed*>(this, ped);
+    const int32 hitSidePed = CPedGeometryAnalyser::ComputeEntityHitSide(*ped, *m_Veh);
+    const int32 hitSideTarget = CPedGeometryAnalyser::ComputeEntityHitSide(m_TargetPt, *m_Veh);
+
+    auto& clearance = StaticRef<float>(0x8D22B0);
+    const float oldClearance = clearance;
+
+    if (hitSidePed == hitSideTarget) {
+        clearance = 0.7f;
+        CVector pointPed;
+        CPedGeometryAnalyser::ComputeClosestSurfacePoint(*ped, *m_Veh, pointPed);
+        CVector pointTarget;
+        CPedGeometryAnalyser::ComputeClosestSurfacePoint(m_TargetPt, *m_Veh, pointTarget);
+        clearance = oldClearance;
+
+        m_Route->AddUnlessFull(pointPed);
+        m_Route->AddUnlessFull(pointTarget);
+
+        return 0.0f;
+    }
+
+    clearance = 0.7f;
+    CVector pointPed;
+    CPedGeometryAnalyser::ComputeClosestSurfacePoint(*ped, *m_Veh, pointPed);
+    CVector pointTarget;
+    CPedGeometryAnalyser::ComputeClosestSurfacePoint(m_TargetPt, *m_Veh, pointTarget);
+    clearance = oldClearance;
+
+    const CVector origPedPos = ped->GetPosition();
+    const CVector origTargetPt = m_TargetPt;
+
+    ped->SetPosn(pointPed);
+    m_TargetPt = pointTarget;
+
+    ComputeRouteRoundSmallCar(ped);
+
+    m_TargetPt = origTargetPt;
+    ped->SetPosn(origPedPos);
+
+    CPointRoute tempRoute = *m_Route;
+    m_Route->Clear();
+
+    m_Route->AddUnlessFull(pointPed);
+    for (uint32 i = 0; i < tempRoute.GetSize(); ++i) {
+        m_Route->AddUnlessFull(tempRoute[i]);
+    }
+
+    clearance = 0.7f;
+    CPedGeometryAnalyser::ComputeClosestSurfacePoint(m_TargetPt, *m_Veh, pointTarget);
+    clearance = oldClearance;
+
+    m_Route->AddUnlessFull(pointTarget);
+
+    return 0.0f;
 }
 
 // 0x657B80

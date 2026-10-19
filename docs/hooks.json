@@ -30962,7 +30962,7 @@
   {
     "Category": "CTaskComplexWalkRoundCar",
     "Name": "ComputeRouteRoundSmallCar",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWalkRoundCar",
@@ -30972,7 +30972,7 @@
   {
     "Category": "CTaskComplexWalkRoundCar",
     "Name": "ComputeRouteRoundBigCar",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWalkRoundCar",
