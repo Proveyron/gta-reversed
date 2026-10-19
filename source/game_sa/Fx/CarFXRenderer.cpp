@@ -2,6 +2,8 @@
 
 #include "CarFXRenderer.h"
 #include "CustomCarEnvMapPipeline.h"
+#include "TxdStore.h"
+#include "ClothesBuilder.h"
 
 void CCarFXRenderer::InjectHooks() {
     RH_ScopedClass(CCarFXRenderer);
@@ -9,7 +11,7 @@ void CCarFXRenderer::InjectHooks() {
 
     RH_ScopedInstall(RegisterPlugins, 0x5D5B00);
     RH_ScopedInstall(Initialise, 0x5D5AC0);
-    RH_ScopedInstall(InitialiseDirtTexture, 0x5D5BC0, { .Reversed = false });
+    RH_ScopedInstall(InitialiseDirtTexture, 0x5D5BC0);
     RH_ScopedInstall(Shutdown, 0x5D5AD0);
     RH_ScopedInstall(PreRenderUpdate, 0x5D5B10);
     RH_ScopedInstall(IsCCPCPipelineAttached, 0x5D5B80);
@@ -31,7 +33,49 @@ bool CCarFXRenderer::Initialise() {
 
 // 0x5D5BC0
 void CCarFXRenderer::InitialiseDirtTexture() {
-    plugin::Call<0x5D5BC0>();
+    const auto txd = CTxdStore::FindTxdSlot("vehicle");
+    CTxdStore::PushCurrentTxd();
+    CTxdStore::SetCurrentTxd(txd);
+
+    auto* dict = CTxdStore::GetTxd(txd);
+    auto* grungeTex = RwTexDictionaryFindNamedTexture(dict, "vehiclegrunge256");
+    if (!grungeTex) {
+        CTxdStore::PopCurrentTxd();
+        return;
+    }
+
+    auto* grungeRaster = RwTextureGetRaster(grungeTex);
+    const auto width = RwRasterGetWidth(grungeRaster);
+    const auto height = RwRasterGetHeight(grungeRaster);
+
+    int32 ebx = 0xFF0;
+    for (auto dirtLevel = 0; dirtLevel < NUM_DIRT_TEXTURES; dirtLevel++) {
+        auto* tex = CClothesBuilder::CopyTexture(grungeTex);
+        ms_aDirtTextures[dirtLevel] = tex;
+        RwTextureSetName(tex, "vehiclegrunge256");
+
+        auto* raster = RwTextureGetRaster(tex);
+        auto* pixels = RwRasterLock(raster, 0, rwRASTERLOCKWRITE | rwRASTERLOCKREAD);
+        if (pixels) {
+            const auto factor = static_cast<uint8>(ebx >> 4);
+            const auto stride = RwRasterGetStride(raster);
+
+            for (auto y = 0; y < height; y++) {
+                auto* row = reinterpret_cast<uint8*>(pixels) + y * stride;
+                for (auto x = 0; x < width; x++) {
+                    auto* pixel = &row[x * 4];
+                    pixel[0] = static_cast<uint8>((pixel[0] * dirtLevel) / 16 + factor);
+                    pixel[1] = static_cast<uint8>((pixel[1] * dirtLevel) / 16 + factor);
+                    pixel[2] = static_cast<uint8>((pixel[2] * dirtLevel) / 16 + factor);
+                }
+            }
+            RwRasterUnlock(raster);
+        }
+
+        ebx -= 0xFF;
+    }
+
+    CTxdStore::PopCurrentTxd();
 }
 
 // 0x5D5AD0
