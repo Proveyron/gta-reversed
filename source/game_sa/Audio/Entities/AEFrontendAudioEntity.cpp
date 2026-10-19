@@ -34,9 +34,6 @@ void CAEFrontendAudioEntity::Reset() {
 
 // 0x4DD4A0
 void CAEFrontendAudioEntity::AddAudioEvent(eAudioEvents event, float fVolumeBoost, float fSpeed) {
-    return plugin::CallMethod<0x4DD4A0, CAEFrontendAudioEntity*, int32, float, float>(this, event, fVolumeBoost, fSpeed);
-
-    // untested
     CAESound sound;
     CVector XVECP = { +1.0f, 0.0f, 0.0f };
     CVector XVECM = { -1.0f, 0.0f, 0.0f };
@@ -757,9 +754,6 @@ bool CAEFrontendAudioEntity::IsLoadingTuneActive() {
 
 // 0x4DEDA0
 void CAEFrontendAudioEntity::UpdateParameters(CAESound* sound, int16 curPlayPos) {
-    return plugin::CallMethod<0x4DEDA0, CAEFrontendAudioEntity*, CAESound*, int16>(this, sound, curPlayPos);
-
-    // untested
     if (!sound)
         return;
 
@@ -812,8 +806,8 @@ void CAEFrontendAudioEntity::InjectHooks() {
 
     RH_ScopedInstall(Initialise, 0x5B9AB0);
     RH_ScopedInstall(Reset, 0x4DD440);
-    RH_ScopedInstall(AddAudioEvent, 0x4DD4A0, { .Reversed = false });
+    RH_ScopedInstall(AddAudioEvent, 0x4DD4A0);
     RH_ScopedInstall(IsRadioTuneSoundActive, 0x4DD480);
     RH_ScopedInstall(IsLoadingTuneActive, 0x4DD470);
-    RH_ScopedVMTInstall(UpdateParameters, 0x4DEDA0, { .Reversed = false });
+    RH_ScopedVMTInstall(UpdateParameters, 0x4DEDA0);
 }

@@ -1,16 +1,16 @@
-# Reimplementation progress (*): 91%
+# Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 17:41:41 UTC
+Last update was at Oct 19, 2026 at 18:43:36 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7579 out of 8295 functions done in 719 categories)
+## Stats (7596 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (625/719) [87%]
+#### Completely reversed categories (634/719) [88%]
 
 <details>
 <summary>See list of categories</summary>
@@ -38,6 +38,7 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CCheckpoints (8)<br />
 - CPedList (7)<br />
 - CBouncingPanel (3)<br />
+- CRopes (11)<br />
 - CWeaponInfo (10)<br />
 - CCurrentVehicle (2)<br />
 - CCurves (6)<br />
@@ -186,6 +187,7 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CIdleCam (14)<br />
 - CVehicleSaveStructure (2)<br />
 - CStaticShadow (1)<br />
+- CRealTimeShadowManager (7)<br />
 - CRealTimeShadow (8)<br />
 - CShadowCamera (19)<br />
 - ProcObjectMan_c (8)<br />
@@ -215,6 +217,7 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CCivilianPed (3)<br />
 - CPlaceable (16)<br />
 - CEntity (70)<br />
+- CPhysical (56)<br />
 - CDummy (1)<br />
 - CDummyObject (2)<br />
 - CObject (48)<br />
@@ -222,6 +225,7 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CHandObject (3)<br />
 - CBuilding (2)<br />
 - CAnimatedBuilding (3)<br />
+- CGroupEventHandler (32)<br />
 - CEvent (3)<br />
 - CEventSeenPanickedPed (2)<br />
 - CEventCarUpsideDown (2)<br />
@@ -352,6 +356,7 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CTaskComplexGetOnBoatSeat (8)<br />
 - CTaskComplexGoToBoatSteeringWheel (6)<br />
 - CTaskComplexGoToCarDoorAndStandStill (11)<br />
+- CTaskComplexGoToPointAiming (8)<br />
 - CTaskComplexGoToPointAndStandStillAndAchieveHeading (8)<br />
 - CTaskComplexGoToPointShooting (3)<br />
 - CTaskComplexHitByGunResponse (8)<br />
@@ -559,6 +564,8 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CKeyArray (4)<br />
 - CCustomCarEnvMapPipeline (37)<br />
 - CConversations (11)<br />
+- CConversationForPed (2)<br />
+- CPedToPlayerConversations (3)<br />
 - CIplDefPool (1)<br />
 - CPedPool (2)<br />
 - CVehiclePool (1)<br />
@@ -602,6 +609,7 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CAEDoorAudioEntity (6)<br />
 - CAEExplosionAudioEntity (3)<br />
 - CAEFireAudioEntity (7)<br />
+- CAEFrontendAudioEntity (6)<br />
 - CAEGlobalWeaponAudioEntity (6)<br />
 - CAEPedlessSpeechAudioEntity (11)<br />
 - CAEPedSpeechAudioEntity (58)<br />
@@ -630,6 +638,7 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CAutomobile (100)<br />
 - CBoat (23)<br />
 - CHeli (11)<br />
+- CQuadBike (12)<br />
 - CTrailer (13)<br />
 - FurnitureGroup_c (6)<br />
 - FurnitureManager_c (7)<br />
@@ -642,15 +651,14 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 
 </details>
 
-#### Partially reversed categories (88/719) [12%]
+#### Partially reversed categories (80/719) [11%]
 
 <details>
 <summary>See list of categories</summary>
 - CPedGroupPlacer (1/4) [25%]<br />
 - CInterestingEvents (2/7) [29%]<br />
 - CWeaponEffects (8/9) [89%]<br />
-- CRope (5/7) [71%]<br />
-- CRopes (9/11) [82%]<br />
+- CRope (6/7) [86%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
 - CFileLoader (47/48) [98%]<br />
 - CClothesBuilder (15/23) [65%]<br />
@@ -679,15 +687,12 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CCustomBuildingRenderer (3/7) [43%]<br />
 - CProjectileInfo (1/12) [8%]<br />
 - CPools (16/19) [84%]<br />
-- CRealTimeShadowManager (5/7) [71%]<br />
 - CShadows (21/31) [68%]<br />
 - CCam (20/45) [44%]<br />
 - FxSystem_c (31/35) [89%]<br />
 - FxEmitterBP_c (2/9) [22%]<br />
 - CPed (137/145) [94%]<br />
 - CPlayerPed (50/65) [77%]<br />
-- CPhysical (54/56) [96%]<br />
-- CGroupEventHandler (30/32) [94%]<br />
 - CEventHandler (69/72) [96%]<br />
 - CTaskComplexUseClosestFreeScriptedAttractor (6/8) [75%]<br />
 - CTaskGangHasslePed (2/5) [40%]<br />
@@ -696,7 +701,6 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexGoToAttractor (2/5) [40%]<br />
-- CTaskComplexGoToPointAiming (6/8) [75%]<br />
 - CTaskComplexGoToPointAnyMeans (3/7) [43%]<br />
 - CTaskComplexGotoDoorAndOpen (3/7) [43%]<br />
 - CTaskComplexKillCriminal (9/11) [82%]<br />
@@ -717,8 +721,6 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - CCustomBuildingDNPipeline (14/16) [88%]<br />
-- CPedToPlayerConversations (2/3) [67%]<br />
-- CAEFrontendAudioEntity (4/6) [67%]<br />
 - CAEPedAudioEntity (16/20) [80%]<br />
 - CAEPoliceScannerAudioEntity (13/17) [76%]<br />
 - CAEScriptAudioEntity (8/19) [42%]<br />
@@ -729,7 +731,6 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 - CBmx (7/10) [70%]<br />
 - CMonsterTruck (5/11) [45%]<br />
 - CPlane (14/23) [61%]<br />
-- CQuadBike (11/12) [92%]<br />
 - CTrain (21/41) [51%]<br />
 - CVehicle (145/149) [97%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
@@ -737,14 +738,13 @@ Last update was at Oct 19, 2026 at 17:41:41 UTC
 
 </details>
 
-#### Not-at-all reversed categories (6/719) [0.8%]
+#### Not-at-all reversed categories (5/719) [0.7%]
 
 <details>
 <summary>See list of categories</summary>
 - CTaskComplexGangFollower (7)<br />
 - CTaskSimpleFight (5)<br />
 - CDecisionMakerTypes (8)<br />
-- CConversationForPed (2)<br />
 - Interior_c (52)<br />
 - CMemoryMgr (7)<br />
 

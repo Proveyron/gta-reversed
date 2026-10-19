@@ -20,7 +20,7 @@ void CPhysical::InjectHooks()
     RH_ScopedInstall(Constructor, 0x542260);
     RH_ScopedInstall(Destructor, 0x542450);
 
-    RH_ScopedInstall(RemoveAndAdd, 0x542560, { .Reversed = false });
+    RH_ScopedInstall(RemoveAndAdd, 0x542560);
     RH_ScopedInstall(ApplyTurnForce, 0x542A50);
     RH_ScopedInstall(ApplyForce, 0x542B50);
     RH_ScopedInstall(GetSpeed, 0x542CE0);
@@ -30,7 +30,7 @@ void CPhysical::InjectHooks()
     RH_ScopedInstall(SetDamagedPieceRecord, 0x5428C0);
     RH_ScopedInstall(RemoveFromMovingList, 0x542860);
     RH_ScopedInstall(AddToMovingList, 0x542800);
-    RH_ScopedVMTInstall(Add, 0x544A30, { .Reversed = false });
+    RH_ScopedVMTInstall(Add, 0x544A30);
     RH_ScopedVMTInstall(Remove, 0x5424C0);
     RH_ScopedVMTInstall(GetBoundRect, 0x5449B0);
     RH_ScopedVMTInstall(ProcessControl, 0x5485E0);
@@ -139,10 +139,7 @@ CPhysical::~CPhysical()
 }
 
 // 0x544A30
-void CPhysical::Add()
-{
-    // TODO: Refactor `CEntryInfoNode` to be templated then use it here
-#if 0
+void CPhysical::Add() {
     if (m_bIsBIGBuilding) {
         CEntity::Add();
         return;
@@ -155,31 +152,27 @@ void CPhysical::Add()
     int32 endSectorY = CWorld::GetSectorY(boundRect.top);
     for (int32 sectorY = startSectorY; sectorY <= endSectorY; ++sectorY) {
         for (int32 sectorX = startSectorX; sectorX <= endSectorX; ++sectorX) {
-            CPtrListDoubleLink* list = nullptr;
-            CRepeatSector* repeatSector = GetRepeatSector(sectorX, sectorY);
-            switch (m_nType) {
-            case ENTITY_TYPE_VEHICLE:
-                list = &repeatSector.Vehicles;
-                break;
-            case ENTITY_TYPE_PED:
-                list = &repeatSector.Peds;
-                break;
-            case ENTITY_TYPE_OBJECT:
-                list = &repeatSector.Objects;
-                break;
-            }
+            CRepeatSector* const rs = &CWorld::GetRepeatSector(sectorX, sectorY);
+            const auto ProcessSectorList = [&]<typename PtrListType>(PtrListType& list) {
+                using ListItemType = typename PtrListType::ItemType;
+                using EntryNodeType = CPtrNodeDoubleLink<CPhysical*>;
 
-            auto newEntityInfoNode = new CEntryInfoNode();
-            if (newEntityInfoNode) {
-                newEntityInfoNode->m_doubleLink = list->AddItem(this);
-                newEntityInfoNode->m_repeatSector = repeatSector;
-                newEntityInfoNode->m_doubleLinkList = list;
+                auto* newEntityInfoNode = new CEntryInfoNode{};
+                if (newEntityInfoNode) {
+                    newEntityInfoNode->m_doubleLink = reinterpret_cast<EntryNodeType*>(list.AddItem(reinterpret_cast<std::remove_pointer_t<ListItemType>*>(this)));
+                    newEntityInfoNode->m_repeatSector = rs;
+                    newEntityInfoNode->m_doubleLinkList = reinterpret_cast<CPtrListDoubleLink<CPhysical*>*>(&list);
+                }
+                newEntityInfoNode->AddToList(m_pCollisionList.m_node);
+                m_pCollisionList.m_node = newEntityInfoNode;
+            };
+            switch (GetType()) {
+            case ENTITY_TYPE_VEHICLE: ProcessSectorList(rs->Vehicles); break;
+            case ENTITY_TYPE_PED:     ProcessSectorList(rs->Peds);     break;
+            case ENTITY_TYPE_OBJECT:  ProcessSectorList(rs->Objects);  break;
             }
-            newEntityInfoNode->AddToList(m_pCollisionList.m_node);
-            m_pCollisionList.m_node = newEntityInfoNode;
         }
     }
-#endif
 }
 
 // 0x5424C0

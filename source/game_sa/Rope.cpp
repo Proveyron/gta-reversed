@@ -9,7 +9,7 @@ void CRope::InjectHooks() {
 
     RH_ScopedInstall(ReleasePickedUpObject, 0x556030);
     RH_ScopedInstall(CreateHookObjectForRope, 0x556070);
-    RH_ScopedInstall(UpdateWeightInRope, 0x5561B0, { .Reversed = false });
+    RH_ScopedInstall(UpdateWeightInRope, 0x5561B0);
     RH_ScopedInstall(Remove, 0x556780);
     RH_ScopedInstall(Render, 0x556800);
     RH_ScopedInstall(PickUpObject, 0x5569C0);
@@ -87,7 +87,61 @@ void CRope::CreateHookObjectForRope() {
 
 // 0x5561B0
 int8 CRope::UpdateWeightInRope(float a2, float a3, float a4, int32 a5, float* a6) {
-    return plugin::CallMethodAndReturn<int8, 0x5561B0, CRope*, float, float, float, int32, float*>(this, a2, a3, a4, a5, a6);
+    const CVector pos = { a2, a3, a4 };
+    auto* outVec = reinterpret_cast<CVector*>(a6);
+
+    m_aSegments[NUM_ROPE_SEGMENTS - 1] = pos;
+
+    const float maxDist = static_cast<float>(NUM_ROPE_SEGMENTS - 1 - m_nSegments) * m_fSegmentLength;
+    CVector diff = pos - m_aSegments[m_nSegments];
+    const float dist = diff.Magnitude();
+
+    if (dist > maxDist) {
+        if (outVec) {
+            *outVec = m_aSegments[m_nSegments] + diff * (maxDist / dist);
+        }
+
+        diff.Normalise();
+        for (auto i = static_cast<uint8>(m_nSegments + 1); i < NUM_ROPE_SEGMENTS; i++) {
+            const float segDist = static_cast<float>(i - m_nSegments) * m_fSegmentLength;
+            m_aSegments[i] = m_aSegments[m_nSegments] + diff * segDist;
+        }
+        return 1;
+    }
+
+    // 6 relaxation iterations
+    for (int32 iter = 0; iter < 6; iter++) {
+        // Backward pass: from 31 down to m_nSegments + 1
+        for (int32 i = NUM_ROPE_SEGMENTS - 1; i > m_nSegments; i--) {
+            CVector segDiff = m_aSegments[i] - m_aSegments[i - 1];
+            const float segLen = segDiff.Magnitude();
+            if (segLen > m_fSegmentLength) {
+                const CVector oldPos = m_aSegments[i - 1];
+                m_aSegments[i - 1] = m_aSegments[i] - (segDiff / segLen) * m_fSegmentLength;
+                m_aSpeed[i - 1] = (m_aSegments[i - 1] - oldPos) / CTimer::ms_fTimeStep;
+            }
+        }
+
+        // Forward pass: from m_nSegments + 1 up to 31
+        for (auto i = static_cast<uint8>(m_nSegments + 1); i < NUM_ROPE_SEGMENTS; i++) {
+            CVector segDiff = m_aSegments[i] - m_aSegments[i - 1];
+            const float segLen = segDiff.Magnitude();
+            if (segLen > m_fSegmentLength) {
+                m_aSegments[i] = m_aSegments[i - 1] + (segDiff / segLen) * m_fSegmentLength;
+            }
+        }
+    }
+
+    // Check if the top segment is still stretched
+    for (int32 i = NUM_ROPE_SEGMENTS - 1; i > m_nSegments; i--) {
+        CVector segDiff = m_aSegments[i] - m_aSegments[i - 1];
+        const float segLen = segDiff.Magnitude();
+        if (segLen > m_fSegmentLength) {
+            m_aSegments[i - 1] = m_aSegments[i] - (segDiff / segLen) * m_fSegmentLength;
+        }
+    }
+
+    return 0;
 }
 
 // 0x556780

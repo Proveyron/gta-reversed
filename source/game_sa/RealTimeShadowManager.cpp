@@ -10,9 +10,9 @@ void CRealTimeShadowManager::InjectHooks() {
     RH_ScopedCategory("Shadows");
 
     RH_ScopedInstall(Init, 0x7067C0);
-    RH_ScopedInstall(ReInit, 0x706870, {.Reversed = false});
+    RH_ScopedInstall(ReInit, 0x706870);
     RH_ScopedInstall(ReturnRealTimeShadow, 0x705B30);
-    RH_ScopedInstall(GetRealTimeShadow, 0x706970, { .Reversed = false });
+    RH_ScopedInstall(GetRealTimeShadow, 0x706970);
     RH_ScopedInstall(Update, 0x706AB0);
     RH_ScopedInstall(DoShadowThisFrame, 0x706BA0);
     RH_ScopedInstall(Exit, 0x706A60);
@@ -64,7 +64,25 @@ void CRealTimeShadowManager::ReturnRealTimeShadow(CRealTimeShadow* shdw) {
 
 // 0x706870
 void CRealTimeShadowManager::ReInit() {
-    plugin::CallMethod<0x706870, CRealTimeShadowManager*>(this);
+    auto RecreateCameraRaster = [](CShadowCamera& camera) {
+        RwRaster* raster = camera.m_pRwCamera->frameBuffer;
+        const int32 size = raster->width;
+        camera.m_pRwCamera->frameBuffer = nullptr;
+        RwRasterDestroy(raster);
+
+        RwRaster* newRaster = RwRasterCreate(size, size, 0, rwRASTERTYPECAMERATEXTURE);
+        camera.m_pRwCamera->frameBuffer = newRaster;
+        RwTextureSetRaster(camera.m_pRwRenderTexture, newRaster);
+    };
+
+    for (auto* shdw : m_apShadows) {
+        RecreateCameraRaster(shdw->m_camera);
+        RecreateCameraRaster(shdw->m_blurCamera);
+    }
+
+    RecreateCameraRaster(m_BlurCamera);
+    RecreateCameraRaster(m_GradientCamera);
+    m_GradientCamera.MakeGradientRaster();
 }
 
 // 0x706AB0
@@ -117,24 +135,45 @@ void CRealTimeShadowManager::Update() {
     }
 }
 
-CRealTimeShadow& CRealTimeShadowManager::GetRealTimeShadow(CPhysical* physical) {
-    return plugin::CallMethodAndReturn<CRealTimeShadow&, 0x706970, CRealTimeShadowManager*, CPhysical*>(this, physical);
-    /*
-    * Unfinished
-    if (m_bInitialised) {
-        return;
+// 0x706970
+CRealTimeShadow* CRealTimeShadowManager::GetRealTimeShadow(CPhysical* physical) {
+    bool isPlayer1 = false;
+    if (physical->GetIsTypePed()) {
+        isPlayer1 = (physical->AsPed()->m_nPedType == PED_TYPE_PLAYER1);
     }
 
-    bool isFirstPlayer{};
+    bool allowShadow = true;
+    CPed* player = CWorld::Players[CWorld::PlayerInFocus].m_pPed;
+    if (player && player->bInVehicle && player->m_pVehicle) {
+        if (player->m_pVehicle->m_vecMoveSpeed.MagnitudeSquared() >= 0.09f) {
+            allowShadow = false;
+        }
+    }
 
-    if (!physical->GetIsTypePed() || physical->AsPed()->IsPlayer()) {
-        if (FindPlayerPed()->IsInVehicle()) { // Maybe wrong?
-            if (FindPlayerPed()->m_pVehicle->GetMoveSpeed().SquaredMagnitude() < sq(0.3f)) {
-                return;
+    if (!m_bInitialised || !allowShadow) {
+        return nullptr;
+    }
+
+    CRealTimeShadow* chosenShadow = nullptr;
+    if (isPlayer1) {
+        chosenShadow = m_apShadows[0];
+    } else {
+        for (int32 i = 1; i < NUM_REALTIME_SHADOWS; ++i) {
+            if (!m_apShadows[i]->m_pOwner) {
+                chosenShadow = m_apShadows[i];
+                break;
             }
         }
     }
-    */
+
+    if (chosenShadow) {
+        chosenShadow->SetupForThisEntity(physical);
+        physical->m_pShadowData = chosenShadow;
+        chosenShadow->m_bKeepAlive = true;
+        chosenShadow->m_nIntensity = 0;
+    }
+
+    return chosenShadow;
 }
 
 // 0x706BA0

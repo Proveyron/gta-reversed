@@ -84,6 +84,8 @@ public:
 
     auto GetCurrentEvent()         { return m_CurrentEvent; }
     auto GetHighestPriorityEvent() { return m_HighestPriorityEvent; }
+    auto GetTaskSequenceId() const { return m_TaskSeqId; }
+    void SetTaskSequenceId(int32 id) { m_TaskSeqId = id; }
 
     template<std::derived_from<CEvent> T>
     auto AddEvent(T event) { // TODO: Remove in final
