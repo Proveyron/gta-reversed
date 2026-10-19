@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 21:34:39 UTC
+Last update was at Oct 19, 2026 at 21:51:06 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7640 out of 8295 functions done in 719 categories)
+## Stats (7645 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (655/719) [91%]
+#### Completely reversed categories (656/719) [91%]
 
 <details>
 <summary>See list of categories</summary>
@@ -372,6 +372,7 @@ Last update was at Oct 19, 2026 at 21:34:39 UTC
 - CTaskComplexGoToPointAiming (8)<br />
 - CTaskComplexGoToPointAndStandStillAndAchieveHeading (8)<br />
 - CTaskComplexGoToPointShooting (3)<br />
+- CTaskComplexGotoDoorAndOpen (7)<br />
 - CTaskComplexHitByGunResponse (8)<br />
 - CTaskComplexHitResponse (7)<br />
 - CTaskComplexInWater (7)<br />
@@ -672,7 +673,7 @@ Last update was at Oct 19, 2026 at 21:34:39 UTC
 
 </details>
 
-#### Partially reversed categories (59/719) [8%]
+#### Partially reversed categories (58/719) [8%]
 
 <details>
 <summary>See list of categories</summary>
@@ -690,7 +691,7 @@ Last update was at Oct 19, 2026 at 21:34:39 UTC
 - CStencilShadows (9/13) [69%]<br />
 - CFont (32/36) [89%]<br />
 - CCamera (97/114) [85%]<br />
-- CGangWars (32/35) [91%]<br />
+- CGangWars (33/35) [94%]<br />
 - CPedGroups (2/11) [18%]<br />
 - CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
@@ -710,7 +711,6 @@ Last update was at Oct 19, 2026 at 21:34:39 UTC
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexGoToPointAnyMeans (3/7) [43%]<br />
-- CTaskComplexGotoDoorAndOpen (3/7) [43%]<br />
 - CTaskComplexLeaveCarAndWander (2/8) [25%]<br />
 - CTaskComplexSmartFleePoint (2/12) [17%]<br />
 - CTaskComplexWaitForBus (2/7) [29%]<br />

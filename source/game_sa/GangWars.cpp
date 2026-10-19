@@ -22,7 +22,7 @@ void CGangWars::InjectHooks() {
     RH_ScopedCategoryGlobal();
 
     RH_ScopedInstall(InitAtStartOfGame, 0x443920);
-    RH_ScopedInstall(AddKillToProvocation, 0x443950, { .Reversed = false });                  // ?
+    RH_ScopedInstall(AddKillToProvocation, 0x443950);
     RH_ScopedInstall(AttackWaveOvercome, 0x445B30);
     RH_ScopedInstall(CalculateTimeTillNextAttack, 0x443DB0);
     RH_ScopedInstall(CanPlayerStartAGangWarHere, 0x443F80);
