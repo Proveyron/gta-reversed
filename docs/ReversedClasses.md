@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 15:22:39 UTC
+Last update was at Oct 19, 2026 at 15:28:35 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7537 out of 8295 functions done in 719 categories)
+## Stats (7538 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (588/719) [82%]
+#### Completely reversed categories (589/719) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -73,6 +73,7 @@ Last update was at Oct 19, 2026 at 15:22:39 UTC
 - CMouseControllerState (3)<br />
 - CReferences (4)<br />
 - CShotInfo (5)<br />
+- SurfaceInfos_c (48)<br />
 - CRenderer (33)<br />
 - CObjectData (2)<br />
 - CObjectSaveStructure (2)<br />
@@ -605,7 +606,7 @@ Last update was at Oct 19, 2026 at 15:22:39 UTC
 
 </details>
 
-#### Partially reversed categories (123/719) [17%]
+#### Partially reversed categories (122/719) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -624,7 +625,6 @@ Last update was at Oct 19, 2026 at 15:22:39 UTC
 - CClothesBuilder (15/23) [65%]<br />
 - CClothes (10/11) [91%]<br />
 - CPopulation (64/66) [97%]<br />
-- SurfaceInfos_c (47/48) [98%]<br />
 - CPedGroupIntelligence (26/27) [96%]<br />
 - CCollision (59/61) [97%]<br />
 - CPedDamageResponseCalculator (2/7) [29%]<br />
