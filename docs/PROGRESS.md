@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 05:43:08 UTC
+Last update was at Oct 20, 2026 at 05:56:05 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7713 out of 8295 functions done in 719 categories)
+## Stats (7717 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (674/719) [94%]
+#### Completely reversed categories (675/719) [94%]
 
 <details>
 <summary>See list of categories</summary>
@@ -652,6 +652,7 @@ Last update was at Oct 20, 2026 at 05:43:08 UTC
 - CAEWeaponAudioEntity (20)<br />
 - CAEPoliceScannerAudioEntity (17)<br />
 - CAETwinLoopSoundEntity (7)<br />
+- CAEVehicleAudioEntity (106)<br />
 - CAEWaterCannonAudioEntity (7)<br />
 - CAEWeatherAudioEntity (5)<br />
 - CAEAudioChannel (12)<br />
@@ -691,7 +692,7 @@ Last update was at Oct 20, 2026 at 05:43:08 UTC
 
 </details>
 
-#### Partially reversed categories (40/719) [6%]
+#### Partially reversed categories (39/719) [5%]
 
 <details>
 <summary>See list of categories</summary>
@@ -727,7 +728,6 @@ Last update was at Oct 20, 2026 at 05:43:08 UTC
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - CAEScriptAudioEntity (8/19) [42%]<br />
-- CAEVehicleAudioEntity (102/106) [96%]<br />
 - CAERadioTrackManager (29/43) [67%]<br />
 - CBike (22/40) [55%]<br />
 - CMonsterTruck (5/11) [45%]<br />

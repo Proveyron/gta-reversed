@@ -3761,8 +3761,84 @@ void CAEVehicleAudioEntity::ProcessDummySeaPlane(tVehicleParams& vp) {
 #pragma region Jet
 
 // 0x4FF900
-void CAEVehicleAudioEntity::ProcessGenericJet(bool bEngineOn, tVehicleParams& params, float fEngineSpeed, float fAccelRatio, float fBrakeRatio, float fStalledVolume, float fStalledFrequency) {
-    plugin::CallMethod<0x4FF900, CAEVehicleAudioEntity*, uint8, tVehicleParams&, float, float, float, float, float>(this, bEngineOn, params, fEngineSpeed, fAccelRatio, fBrakeRatio, fStalledVolume, fStalledFrequency);
+void CAEVehicleAudioEntity::ProcessGenericJet(bool bEngineOn, tVehicleParams& vp, float fEngineSpeed, float fAccelRatio, float fBrakeRatio, float fStalledVolume, float fStalledFrequency) {
+    if (!AEAudioHardware.IsSoundBankLoaded(138, SND_BANK_SLOT_VEHICLE_GEN)) {
+        return;
+    }
+
+    struct tJetSoundConfig {
+        float frontVol;
+        float rearVol;
+        float thrustVolBase;
+        float distantVol;
+    };
+
+    tJetSoundConfig cfg;
+    switch (vp.Vehicle->m_nModelIndex) {
+    case MODEL_SHAMAL:
+        cfg = { 8.0f, 8.0f, 0.0f, -100.0f };
+        break;
+    case MODEL_HYDRA:
+        cfg = { 8.0f, 8.0f, 0.0f, -100.0f };
+        break;
+    case MODEL_AT400:
+        cfg = { 20.0f, 20.0f, 6.0f, -8.0f };
+        break;
+    case MODEL_ANDROM:
+        cfg = { 8.0f, 8.0f, 0.0f, -12.0f };
+        break;
+    default:
+        CancelAllVehicleEngineSounds();
+        return;
+    }
+
+    if (!bEngineOn) {
+        CancelAllVehicleEngineSounds();
+        return;
+    }
+
+    const auto camPos = TheCamera.GetPosition();
+    const auto entityPos = m_Entity->GetPosition();
+    const auto dirToEntity = (entityPos - camPos).Normalized();
+
+    const auto& fwd = m_Entity->GetForward();
+    const auto& right = m_Entity->GetRight();
+
+    const float dot = dirToEntity.Dot(fwd);
+    const float angleFactor = (dot + 1.0f) * 0.5f;
+
+    float accelBrakePitch = 0.0f;
+    if (fAccelRatio > 0.0f) {
+        accelBrakePitch = 0.1f;
+    }
+    if (fBrakeRatio > 0.0f) {
+        accelBrakePitch -= 0.05f;
+    }
+
+    const float frontVolume = cfg.frontVol + CAEAudioUtility::AudioLog10(std::max(0.0001f, fEngineSpeed * (1.0f - 0.67f * angleFactor))) * 20.0f;
+    const float rearVolume = cfg.rearVol + CAEAudioUtility::AudioLog10(std::max(0.0001f, fAccelRatio * (cfg.thrustVolBase * 0.5f + 0.5f))) * 20.0f;
+
+    if (fAccelRatio == 0.0f) {
+        m_CurrentDummyEngineVolume = cfg.thrustVolBase;
+    } else {
+        m_CurrentDummyEngineVolume -= 1.0f;
+    }
+
+    const float thrustVolume = m_CurrentDummyEngineVolume + CAEAudioUtility::AudioLog10(std::max(0.0001f, fEngineSpeed)) * 20.0f;
+
+    float freq = (std::abs(right.z) * 0.1f - fwd.z * 0.15f + accelBrakePitch + 1.0f) * fStalledFrequency;
+    if (m_CurrentDummyEngineFrequency < 0.0f) {
+        m_CurrentDummyEngineFrequency = freq;
+    } else if (m_CurrentDummyEngineFrequency < freq) {
+        m_CurrentDummyEngineFrequency = std::min(freq, m_CurrentDummyEngineFrequency + 0.0053333323f);
+    } else {
+        m_CurrentDummyEngineFrequency = std::max(freq, m_CurrentDummyEngineFrequency - 0.0053333323f);
+    }
+
+    PlayAircraftSound(AE_SOUND_AIRCRAFT_FRONT, SND_BANK_SLOT_VEHICLE_GEN, 10, frontVolume, m_CurrentDummyEngineFrequency);
+    PlayAircraftSound(AE_SOUND_AIRCRAFT_REAR, SND_BANK_SLOT_VEHICLE_GEN, 11, rearVolume, m_CurrentDummyEngineFrequency);
+    PlayAircraftSound(AE_SOUND_AIRCRAFT_THRUST, SND_BANK_SLOT_VEHICLE_GEN, 26, thrustVolume + fStalledVolume, 1.0f);
+    PlayAircraftSound(AE_SOUND_AIRCRAFT_JET_DISTANT, SND_BANK_SLOT_VEHICLE_GEN, 14, cfg.distantVol, 1.0f);
 }
 
 // 0x501960
@@ -3814,8 +3890,68 @@ void CAEVehicleAudioEntity::ProcessPlayerJet(tVehicleParams& vp) {
 
 #pragma region Hovercraft (Vortex)
 // 0x500F50
-void CAEVehicleAudioEntity::ProcessDummyHovercraft(tVehicleParams& params) {
-    plugin::CallMethod<0x500F50, CAEVehicleAudioEntity*, tVehicleParams&>(this, params);
+void CAEVehicleAudioEntity::ProcessDummyHovercraft(tVehicleParams& vp) {
+    CPad::GetPad(0);
+    if (!EnsureHasDummySlot() || !EnsureSoundBankIsLoaded(true)) {
+        return;
+    }
+
+    auto* vehicle = vp.Vehicle;
+    if (!vehicle->vehicleFlags.bEngineOn || m_IsWreckedVehicle) {
+        for (int32 i = 0; i < 12; i++) {
+            CancelVehicleEngineSound(i);
+        }
+        return;
+    }
+
+    auto* plane = vehicle->AsPlane();
+    float fLeftRightSkid = std::clamp(std::abs(plane->m_fLeftRightSkid * (2.0f / 3.0f)), 0.0f, 1.0f);
+
+    float accel = 0.0f;
+    if (vehicle->m_nStatus != STATUS_PLAYER) {
+        if (vp.ThisAccel > 0) {
+            accel = 0.1f;
+        } else if (vp.ThisBrake > 0) {
+            accel = -0.05f;
+        }
+    } else {
+        auto* pad = CPad::GetPad(0);
+        if (vp.Speed < 0.001f) {
+            if (pad->GetAccelerate() > 0) {
+                accel = 0.1f;
+            } else if (pad->GetBrake() > 0) {
+                accel = -0.05f;
+            }
+        } else {
+            if (pad->GetBrake() > 0) {
+                accel = -0.05f;
+            } else if (pad->GetAccelerate() > 0) {
+                accel = 0.1f;
+            }
+        }
+    }
+
+    const float propSpeed = std::clamp(plane->m_fPropSpeed * 2.9411764f, 0.0f, 1.0f);
+    const float volume = propSpeed * 6.0f - 12.0f;
+    const float freq = propSpeed * 0.35f + fLeftRightSkid * 0.15f + 0.8f + accel;
+
+    if (m_CurrentDummyEngineFrequency < 0.0f) {
+        m_CurrentDummyEngineFrequency = freq;
+    } else if (m_CurrentDummyEngineFrequency < freq) {
+        m_CurrentDummyEngineFrequency = std::min(freq, m_CurrentDummyEngineFrequency + 0.0053333323f);
+    } else {
+        m_CurrentDummyEngineFrequency = std::max(freq, m_CurrentDummyEngineFrequency - 0.0053333323f);
+    }
+
+    UpdateGenericVehicleSound(
+        AE_SOUND_CAR_REV,
+        m_DummySlot,
+        m_DummyEngineBank,
+        0,
+        m_CurrentDummyEngineFrequency,
+        volume,
+        3.5f
+    );
 }
 
 // Android
@@ -4320,13 +4456,78 @@ float CAEVehicleAudioEntity::GetBaseVolumeForBicycleTyre(float ratio) const noex
 }
 
 // 0x4FFDC0
-void CAEVehicleAudioEntity::ProcessDummyBicycle(tVehicleParams& params) {
-    plugin::CallMethod<0x4FFDC0, CAEVehicleAudioEntity*, tVehicleParams&>(this, params);
+void CAEVehicleAudioEntity::ProcessDummyBicycle(tVehicleParams& vp) {
+    if (!EnsureHasDummySlot() || !EnsureSoundBankIsLoaded(true)) {
+        return;
+    }
+
+    auto* bike = vp.Vehicle->AsBike();
+    auto* bmx = vp.Vehicle->AsBmx();
+
+    const float speedRatio = std::clamp(std::abs(vp.Speed / vp.Transmission->m_MaxVelocity), 0.0f, 1.0f);
+    const float baseVolume = (bike->m_nNoOfContactWheels > 0 && speedRatio > 0.0f)
+        ? (CAEAudioUtility::AudioLog10(bike->m_nNoOfContactWheels * 0.25f * speedRatio) * 20.0f + m_EventVolume - 8.0f)
+        : -100.0f;
+
+    const float sprocketVolume = (bike->m_nNoOfContactWheels > 0 && speedRatio > 0.0f)
+        ? (CAEAudioUtility::AudioLog10(bike->m_nNoOfContactWheels * 0.25f * speedRatio) * 20.0f + m_EventVolume - 15.0f)
+        : -100.0f;
+
+    const float tyreSpeed = 1.05f + speedRatio * 0.1f + bike->m_nNoOfContactWheels * 0.0125f + std::abs(std::sin(bike->m_RideAnimData.LeanAngle)) * 0.2f;
+    const float tyreVolume = bmx->m_bIsFreewheeling ? (GetBaseVolumeForBicycleTyre(speedRatio) + baseVolume) : -100.0f;
+
+    const float sprocketSpeed = 0.4f + speedRatio * 0.7f;
+
+    PlayBicycleSound(AE_SOUND_BICYCLE_TYRE, m_DummySlot, 0, tyreVolume, tyreSpeed);
+    PlayBicycleSound(AE_SOUND_BICYCLE_SPROCKET_1, m_DummySlot, 1, sprocketVolume, sprocketSpeed);
+
+    static bool s_bPrevFreewheeling = false;
+    if (!bmx->m_bIsFreewheeling && s_bPrevFreewheeling) {
+        PlayBicycleSound(AE_SOUND_BICYCLE_CHAIN_CLANG, m_DummySlot, 1, sprocketVolume, 1.0f);
+    }
+    s_bPrevFreewheeling = bmx->m_bIsFreewheeling;
 }
 
 // 0x500040
-void CAEVehicleAudioEntity::ProcessPlayerBicycle(tVehicleParams& params) {
-    plugin::CallMethod<0x500040, CAEVehicleAudioEntity*, tVehicleParams&>(this, params);
+void CAEVehicleAudioEntity::ProcessPlayerBicycle(tVehicleParams& vp) {
+    if (!AEAudioHardware.IsSoundBankLoaded(m_DummyEngineBank, m_DummySlot)) {
+        return;
+    }
+
+    auto* bmx = vp.Vehicle->AsBmx();
+    auto* bike = vp.Vehicle->AsBike();
+
+    static float s_fPrevCrankAngle = 0.0f;
+    static float s_fPedalSoundCooldown = 0.0f;
+    static bool s_bPrevPlayerFreewheeling = false;
+
+    if (bmx->m_fControlPedaling > 5.0f && (s_fPrevCrankAngle * bmx->m_fCrankAngle < 0.0f) && s_fPedalSoundCooldown <= 0.0f) {
+        s_fPedalSoundCooldown = 6.0f;
+    }
+    s_fPedalSoundCooldown = std::max(0.0f, s_fPedalSoundCooldown - 0.7f * CTimer::GetTimeStep());
+
+    const float speedRatio = std::clamp(std::abs(vp.Speed / vp.Transmission->m_MaxVelocity), 0.0f, 1.0f);
+    const float baseVolume = (bike->m_nNoOfContactWheels > 0 && speedRatio > 0.0f)
+        ? (CAEAudioUtility::AudioLog10(bike->m_nNoOfContactWheels * 0.25f * speedRatio) * 20.0f + m_EventVolume - 8.0f)
+        : -100.0f;
+
+    const float sprocketVolume = (bike->m_nNoOfContactWheels > 0 && speedRatio > 0.0f)
+        ? (CAEAudioUtility::AudioLog10(bike->m_nNoOfContactWheels * 0.25f * speedRatio) * 20.0f + m_EventVolume - 15.0f)
+        : -100.0f;
+
+    const float tyreSpeed = 1.05f + speedRatio * 0.1f + bike->m_nNoOfContactWheels * 0.0125f + std::abs(std::sin(bike->m_RideAnimData.LeanAngle)) * 0.2f;
+    const float tyreVolume = bmx->m_bIsFreewheeling ? (GetBaseVolumeForBicycleTyre(speedRatio) + baseVolume) : -100.0f;
+
+    const float sprocketSpeed = 0.4f + speedRatio * 0.7f;
+
+    PlayBicycleSound(AE_SOUND_BICYCLE_TYRE, m_DummySlot, 0, tyreVolume, tyreSpeed);
+    PlayBicycleSound(AE_SOUND_BICYCLE_SPROCKET_1, m_DummySlot, 1, sprocketVolume, sprocketSpeed);
+
+    if (!bmx->m_bIsFreewheeling && s_bPrevPlayerFreewheeling) {
+        PlayBicycleSound(AE_SOUND_BICYCLE_CHAIN_CLANG, m_DummySlot, 1, sprocketVolume, 1.0f);
+    }
+    s_bPrevPlayerFreewheeling = bmx->m_bIsFreewheeling;
+    s_fPrevCrankAngle = bmx->m_fCrankAngle;
 }
 #pragma endregion
 
@@ -4837,17 +5038,17 @@ void CAEVehicleAudioEntity::InjectHooks() {
     // Jet
     RH_ScopedInstall(ProcessPlayerJet, 0x501650);
     RH_ScopedInstall(ProcessDummyJet, 0x501960);
-    RH_ScopedInstall(ProcessGenericJet, 0x4FF900, { .Reversed = false });
+    RH_ScopedInstall(ProcessGenericJet, 0x4FF900);
 
     // Bicycle
     RH_ScopedInstall(PlayBicycleSound, 0x4F9710);
     RH_ScopedInstall(GetBaseVolumeForBicycleTyre, 0x4F60B0);
-    RH_ScopedInstall(ProcessDummyBicycle, 0x4FFDC0, { .Reversed = false });
-    RH_ScopedInstall(ProcessPlayerBicycle, 0x500040, { .Reversed = false });
+    RH_ScopedInstall(ProcessDummyBicycle, 0x4FFDC0);
+    RH_ScopedInstall(ProcessPlayerBicycle, 0x500040);
 
     RH_ScopedInstall(ProcessPlayerCombine, 0x500CE0);
     RH_ScopedInstall(ProcessDummyRCCar, 0x500DC0);
-    RH_ScopedInstall(ProcessDummyHovercraft, 0x500F50, { .Reversed = false });
+    RH_ScopedInstall(ProcessDummyHovercraft, 0x500F50);
     RH_ScopedInstall(ProcessDummyGolfCart, 0x501270);
     RH_ScopedInstall(ProcessDummyVehicleEngine, 0x501480);
     RH_ScopedInstall(ProcessSpecialVehicle, 0x501AB0);

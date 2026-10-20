@@ -36527,7 +36527,7 @@
   {
     "Category": "CAEVehicleAudioEntity",
     "Name": "ProcessGenericJet",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CAEVehicleAudioEntity",
@@ -36542,12 +36542,12 @@
   {
     "Category": "CAEVehicleAudioEntity",
     "Name": "ProcessDummyBicycle",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CAEVehicleAudioEntity",
     "Name": "ProcessPlayerBicycle",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CAEVehicleAudioEntity",
@@ -36562,7 +36562,7 @@
   {
     "Category": "CAEVehicleAudioEntity",
     "Name": "ProcessDummyHovercraft",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CAEVehicleAudioEntity",
