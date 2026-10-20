@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 01:05:44 UTC
+Last update was at Oct 20, 2026 at 01:09:19 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7699 out of 8295 functions done in 719 categories)
+## Stats (7709 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (671/719) [93%]
+#### Completely reversed categories (673/719) [94%]
 
 <details>
 <summary>See list of categories</summary>
@@ -29,6 +29,7 @@ Last update was at Oct 20, 2026 at 01:05:44 UTC
 - RwHelper (24)<br />
 - CPad (76)<br />
 - CEscalator (5)<br />
+- CInterestingEvents (7)<br />
 - CMenuSystem (21)<br />
 - CPedAttractorManager (14)<br />
 - BoneNode_c (17)<br />
@@ -372,6 +373,7 @@ Last update was at Oct 20, 2026 at 01:05:44 UTC
 - CTaskComplexFleeShooting (8)<br />
 - CTaskComplexFollowLeaderAnyMeans (8)<br />
 - CTaskComplexFollowPointRoute (13)<br />
+- CTaskComplexGangJoinRespond (7)<br />
 - CTaskComplexGangLeader (13)<br />
 - CTaskComplexGetOnBoatSeat (8)<br />
 - CTaskComplexGoToAttractor (5)<br />
@@ -688,11 +690,10 @@ Last update was at Oct 20, 2026 at 01:05:44 UTC
 
 </details>
 
-#### Partially reversed categories (43/719) [6%]
+#### Partially reversed categories (41/719) [6%]
 
 <details>
 <summary>See list of categories</summary>
-- CInterestingEvents (2/7) [29%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
 - CClothesBuilder (15/23) [65%]<br />
 - CPedDamageResponseCalculator (2/7) [29%]<br />
@@ -716,7 +717,6 @@ Last update was at Oct 20, 2026 at 01:05:44 UTC
 - CPlayerPed (50/65) [77%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
-- CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexLeaveCarAndWander (2/8) [25%]<br />
 - CTaskComplexSmartFleePoint (2/12) [17%]<br />
 - CTaskComplexWaitForBus (2/7) [29%]<br />

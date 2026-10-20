@@ -1472,27 +1472,27 @@
     {
         "Category": "CInterestingEvents",
         "Name": "Constructor",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CInterestingEvents",
         "Name": "Destructor",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CInterestingEvents",
         "Name": "Add",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CInterestingEvents",
         "Name": "ScanForNearbyEntities",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CInterestingEvents",
         "Name": "GetInterestingEvent",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CInterestingEvents",
@@ -24737,27 +24737,27 @@
     {
         "Category": "CTaskComplexGangJoinRespond",
         "Name": "Clone",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGangJoinRespond",
         "Name": "MakeAbortable",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGangJoinRespond",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGangJoinRespond",
         "Name": "CreateFirstSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGangJoinRespond",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskComplexGangLeader",
