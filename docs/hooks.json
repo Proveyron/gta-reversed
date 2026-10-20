@@ -13737,12 +13737,12 @@
   {
     "Category": "CCarEnterExit",
     "Name": "GetNearestCarPassengerDoor",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarEnterExit",
     "Name": "GetPositionToOpenCarDoor",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarEnterExit",
@@ -13782,12 +13782,12 @@
   {
     "Category": "CCarEnterExit",
     "Name": "IsPlayerToQuitCarEnter",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarEnterExit",
     "Name": "IsRoomForPedToLeaveCar",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarEnterExit",
@@ -13807,7 +13807,7 @@
   {
     "Category": "CCarEnterExit",
     "Name": "MakeUndraggedPassengerPedsLeaveCar",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarEnterExit",

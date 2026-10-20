@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 06:19:51 UTC
+Last update was at Oct 20, 2026 at 06:33:09 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7737 out of 8295 functions done in 719 categories)
+## Stats (7742 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (679/719) [94%]
+#### Completely reversed categories (680/719) [95%]
 
 <details>
 <summary>See list of categories</summary>
@@ -165,6 +165,7 @@ Last update was at Oct 20, 2026 at 06:19:51 UTC
 - CGamma (2)<br />
 - CHudColours (5)<br />
 - CTxdStore (26)<br />
+- CCarEnterExit (32)<br />
 - CEntityScanner (4)<br />
 - CPedType (13)<br />
 - CAcquaintance (5)<br />
@@ -696,7 +697,7 @@ Last update was at Oct 20, 2026 at 06:19:51 UTC
 
 </details>
 
-#### Partially reversed categories (36/719) [5%]
+#### Partially reversed categories (35/719) [5%]
 
 <details>
 <summary>See list of categories</summary>
@@ -710,7 +711,6 @@ Last update was at Oct 20, 2026 at 06:19:51 UTC
 - CGarages (21/27) [78%]<br />
 - CCamera (97/114) [85%]<br />
 - CPedGroups (2/11) [18%]<br />
-- CCarEnterExit (27/32) [84%]<br />
 - CPathFind (54/62) [87%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
 - CProjectileInfo (1/12) [8%]<br />
