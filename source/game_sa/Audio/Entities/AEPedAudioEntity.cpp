@@ -23,13 +23,13 @@ void CAEPedAudioEntity::InjectHooks() {
     RH_ScopedInstall(HandleFootstepEvent, 0x4E13A0);
     RH_ScopedInstall(HandleSkateEvent, 0x4E17E0);
     RH_ScopedInstall(HandleLandingEvent, 0x4E18E0);
-    RH_ScopedInstall(HandlePedSwing, 0x4E1A40, { .Reversed = false });
-    RH_ScopedInstall(HandlePedHit, 0x4E1CC0, { .Reversed = false });
-    RH_ScopedInstall(HandlePedJacked, 0x4E2350, { .Reversed = false });
+    RH_ScopedInstall(HandlePedSwing, 0x4E1A40);
+    RH_ScopedInstall(HandlePedHit, 0x4E1CC0);
+    RH_ScopedInstall(HandlePedJacked, 0x4E2350);
     RH_ScopedInstall(HandleSwimSplash, 0x4E26A0);
     RH_ScopedInstall(HandleSwimWake, 0x4E2790);
     RH_ScopedInstall(PlayShirtFlap, 0x4E2A90);
-    RH_ScopedInstall(Service, 0x4E2EE0, { .Reversed = false });
+    RH_ScopedInstall(Service, 0x4E2EE0);
 }
 
 // 0x5DE8D0
@@ -495,17 +495,536 @@ void CAEPedAudioEntity::HandleLandingEvent(eAudioEvents event) {
 
 // 0x4E1A40
 void CAEPedAudioEntity::HandlePedSwing(eAudioEvents event, int32 a3, uint32 volume) {
-    plugin::CallMethod<0x4E1A40, CAEPedAudioEntity*, int32, int32, uint32>(this, event, a3, volume);
+    if (!m_pPed) {
+        return;
+    }
+
+    CWeapon& activeWeapon = m_pPed->GetActiveWeapon();
+    if (!&activeWeapon) {
+        return;
+    }
+
+    if (!AEAudioHardware.IsSoundBankLoaded(SND_BANK_GENRL_WEAPONS, SND_BANK_SLOT_WEAPON_GEN)) {
+        if (!AudioEngine.IsLoadingTuneActive()) {
+            AEAudioHardware.LoadSoundBank(SND_BANK_GENRL_WEAPONS, SND_BANK_SLOT_WEAPON_GEN);
+        }
+        return;
+    }
+
+    int16 sfxId = -1;
+    float volumeOffset = 0.0f;
+    float speed = 1.0f;
+    const float defaultVolume = GetDefaultVolume(event);
+
+    const auto weaponType = activeWeapon.m_Type;
+    switch (weaponType) {
+    case WEAPON_GOLFCLUB:
+    case WEAPON_CANE:
+        sfxId = 47;
+        break;
+    case WEAPON_NIGHTSTICK:
+    case WEAPON_POOL_CUE:
+        sfxId = 86;
+        speed = 0.84f;
+        break;
+    case WEAPON_KNIFE:
+    case WEAPON_KATANA:
+        sfxId = 88;
+        volumeOffset = -3.0f;
+        break;
+    case WEAPON_BASEBALLBAT:
+    case WEAPON_SHOVEL:
+        sfxId = 86;
+        speed = 0.67f;
+        break;
+    case WEAPON_DILDO1:
+    case WEAPON_DILDO2:
+    case WEAPON_VIBE1:
+    case WEAPON_VIBE2:
+        sfxId = 86;
+        speed = 0.84f;
+        volumeOffset = -6.0f;
+        break;
+    default:
+        if ((weaponType >= WEAPON_UNARMED && weaponType <= WEAPON_BRASSKNUCKLE) ||
+            weaponType == WEAPON_CHAINSAW ||
+            weaponType == WEAPON_FLOWERS ||
+            (weaponType >= WEAPON_GRENADE && weaponType <= WEAPON_MOLOTOV) ||
+            (weaponType >= WEAPON_PISTOL && weaponType <= WEAPON_SNIPER_RIFLE) ||
+            (weaponType >= WEAPON_FLAMETHROWER && weaponType <= WEAPON_PARACHUTE)) {
+            sfxId = 87;
+            speed = 0.84f;
+            volumeOffset = -6.0f;
+        }
+        break;
+    }
+
+    if (a3 >= 64 && a3 <= 68) {
+        sfxId = 87;
+        speed = 0.84f;
+        if (a3 <= 66) {
+            volumeOffset = -6.0f;
+        } else {
+            volumeOffset = -2.0f;
+        }
+    }
+
+    if (sfxId < 0) {
+        return;
+    }
+
+    m_tempSound.Initialise(
+        SND_BANK_SLOT_WEAPON_GEN,
+        static_cast<eSoundID>(sfxId),
+        this,
+        m_pPed->GetPosition(),
+        defaultVolume + volumeOffset,
+        1.0f,
+        speed,
+        1.0f,
+        0,
+        SOUND_LIFESPAN_TIED_TO_PHYSICAL_ENTITY,
+        0.04f,
+        0
+    );
+
+    m_tempSound.RegisterWithPhysicalEntity(m_pPed);
+
+    if (volume > 0) {
+        m_tempSound.m_Speed = 0.0f;
+        m_tempSound.m_SpeedVariance = 0.0f;
+        m_tempSound.m_ClientVariable = static_cast<float>(CTimer::GetTimeInMS() + volume);
+        m_tempSound.m_Event = event;
+        m_tempSound.SetFlags(SOUND_REQUEST_UPDATES, 1);
+    }
+
+    AESoundManager.RequestNewSound(&m_tempSound);
 }
 
 // 0x4E1CC0
 void CAEPedAudioEntity::HandlePedHit(eAudioEvents event, CPhysical* physical, uint8 surfaceId, float volume, uint32 maxVol) {
-    plugin::CallMethod<0x4E1CC0, CAEPedAudioEntity*, int32, CPhysical*, uint8, float, uint32>(this, event, physical, surfaceId, volume, maxVol);
+    if (!m_pPed) {
+        return;
+    }
+
+    CWeapon& activeWeapon = m_pPed->GetActiveWeapon();
+    if (!&activeWeapon) {
+        return;
+    }
+
+    if (!AEAudioHardware.IsSoundBankLoaded(SND_BANK_GENRL_WEAPONS, SND_BANK_SLOT_WEAPON_GEN)) {
+        if (!AudioEngine.IsLoadingTuneActive()) {
+            AEAudioHardware.LoadSoundBank(SND_BANK_GENRL_WEAPONS, SND_BANK_SLOT_WEAPON_GEN);
+        }
+        return;
+    }
+
+    const float defaultVolume = GetDefaultVolume(event);
+    const float finalVolume = volume + defaultVolume;
+
+    int16 sfxId = -1;
+    float freqVariance = 0.0588f;
+
+    const auto weaponType = activeWeapon.m_Type;
+    switch (weaponType) {
+    case WEAPON_UNARMED:
+    case WEAPON_NIGHTSTICK:
+    case WEAPON_PARACHUTE:
+        sfxId = 58;
+        break;
+    case WEAPON_BRASSKNUCKLE:
+    case WEAPON_GRENADE:
+    case WEAPON_TEARGAS:
+    case WEAPON_MOLOTOV:
+    case WEAPON_PISTOL:
+    case WEAPON_PISTOL_SILENCED:
+    case WEAPON_DESERT_EAGLE:
+    case WEAPON_SHOTGUN:
+    case WEAPON_SAWNOFF_SHOTGUN:
+    case WEAPON_SPAS12_SHOTGUN:
+    case WEAPON_MICRO_UZI:
+    case WEAPON_MP5:
+    case WEAPON_AK47:
+    case WEAPON_M4:
+    case WEAPON_TEC9:
+    case WEAPON_COUNTRYRIFLE:
+    case WEAPON_SNIPER_RIFLE:
+    case WEAPON_FLAMETHROWER:
+    case WEAPON_MINIGUN:
+    case WEAPON_SATCHEL_CHARGE:
+    case WEAPON_DETONATOR:
+    case WEAPON_SPRAYCAN:
+    case WEAPON_EXTINGUISHER:
+    case WEAPON_CAMERA:
+    case WEAPON_NIGHTVISION:
+    case WEAPON_INFRARED:
+        sfxId = 44;
+        break;
+    case WEAPON_GOLFCLUB:
+        sfxId = 48;
+        break;
+    case WEAPON_KNIFE:
+        sfxId = 35;
+        break;
+    case WEAPON_BASEBALLBAT:
+        sfxId = 57;
+        freqVariance = 0.03f;
+        break;
+    case WEAPON_SHOVEL:
+        sfxId = 34;
+        break;
+    case WEAPON_POOL_CUE:
+        sfxId = 75;
+        break;
+    case WEAPON_KATANA:
+        sfxId = 67;
+        break;
+    case WEAPON_CHAINSAW:
+        sfxId = 56;
+        break;
+    case WEAPON_DILDO1:
+    case WEAPON_DILDO2:
+    case WEAPON_VIBE1:
+    case WEAPON_VIBE2:
+        sfxId = 50;
+        break;
+    case WEAPON_FLOWERS:
+        sfxId = 54;
+        freqVariance = 0.07f;
+        break;
+    case WEAPON_CANE:
+        sfxId = 46;
+        break;
+    default:
+        sfxId = -1;
+        break;
+    }
+
+    int16 sfxId2 = -1;
+    float volOffset1 = 0.0f;
+    float volOffset2 = -3.0f;
+    eSoundBankSlot bankSlot1 = SND_BANK_SLOT_WEAPON_GEN;
+
+    if (physical && physical->IsPed()) {
+        switch (event) {
+        case AE_PED_HIT_HIGH: {
+            switch (weaponType) {
+            case WEAPON_BRASSKNUCKLE:
+                sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(40, 43));
+                volOffset1 = 1.0f;
+                break;
+            case WEAPON_KNIFE:
+            case WEAPON_KATANA:
+                sfxId2 = 81;
+                volOffset2 = -9.0f;
+                break;
+            case WEAPON_BASEBALLBAT:
+                sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(40, 43));
+                volOffset1 = -10.0f;
+                break;
+            case WEAPON_CHAINSAW: {
+                if (!AEAudioHardware.IsSoundBankLoaded(SND_BANK_GENRL_BULLET_HITS, SND_BANK_SLOT_FRONTEND_GAME)) {
+                    return;
+                }
+                bankSlot1 = SND_BANK_SLOT_FRONTEND_GAME;
+                sfxId = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(7, 9));
+                sfxId2 = -1;
+                break;
+            }
+            case WEAPON_FLOWERS:
+                sfxId2 = -1;
+                break;
+            default:
+                sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(40, 43));
+                volOffset1 = -15.0f;
+                break;
+            }
+            break;
+        }
+        case AE_PED_HIT_LOW: {
+            switch (weaponType) {
+            case WEAPON_BRASSKNUCKLE:
+                volOffset1 = 1.0f;
+                sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(36, 39));
+                break;
+            case WEAPON_KNIFE:
+            case WEAPON_KATANA:
+                sfxId2 = 81;
+                volOffset2 = -9.0f;
+                break;
+            case WEAPON_BASEBALLBAT:
+                volOffset1 = -10.0f;
+                sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(36, 39));
+                break;
+            case WEAPON_CHAINSAW: {
+                if (!AEAudioHardware.IsSoundBankLoaded(SND_BANK_GENRL_BULLET_HITS, SND_BANK_SLOT_FRONTEND_GAME)) {
+                    return;
+                }
+                bankSlot1 = SND_BANK_SLOT_FRONTEND_GAME;
+                sfxId = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(7, 9));
+                sfxId2 = -1;
+                break;
+            }
+            case WEAPON_FLOWERS:
+                sfxId2 = -1;
+                break;
+            default:
+                volOffset1 = -15.0f;
+                sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(36, 39));
+                break;
+            }
+            break;
+        }
+        case AE_PED_HIT_GROUND: {
+            switch (weaponType) {
+            case WEAPON_KNIFE:
+            case WEAPON_KATANA:
+                sfxId2 = 81;
+                volOffset2 = -9.0f;
+                break;
+            case WEAPON_BASEBALLBAT:
+                volOffset1 = -10.0f;
+                sfxId2 = 82;
+                volOffset2 = -6.0f;
+                break;
+            case WEAPON_CHAINSAW: {
+                if (!AEAudioHardware.IsSoundBankLoaded(SND_BANK_GENRL_BULLET_HITS, SND_BANK_SLOT_FRONTEND_GAME)) {
+                    return;
+                }
+                bankSlot1 = SND_BANK_SLOT_FRONTEND_GAME;
+                sfxId = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(7, 9));
+                sfxId2 = -1;
+                break;
+            }
+            case WEAPON_FLOWERS:
+                sfxId2 = -1;
+                break;
+            default:
+                volOffset1 = -15.0f;
+                sfxId2 = 82;
+                volOffset2 = -6.0f;
+                break;
+            }
+            break;
+        }
+        case AE_PED_HIT_GROUND_KICK: {
+            sfxId2 = 82;
+            volOffset2 = -6.0f;
+            break;
+        }
+        case AE_PED_HIT_HIGH_UNARMED:
+        case AE_PED_HIT_MARTIAL_PUNCH: {
+            sfxId = 58;
+            sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(40, 43));
+            break;
+        }
+        case AE_PED_HIT_LOW_UNARMED: {
+            sfxId = 58;
+            sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(36, 39));
+            break;
+        }
+        case AE_PED_HIT_MARTIAL_KICK: {
+            sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(59, 62));
+            break;
+        }
+        default:
+            break;
+        }
+    } else {
+        switch (event) {
+        case AE_PED_HIT_HIGH:
+        case AE_PED_HIT_LOW:
+        case AE_PED_HIT_GROUND: {
+            volOffset2 = plugin::CallAndReturn<float, 0x4DA510, uint8>(surfaceId);
+            AudioEngine.ReportCollision(m_pPed, physical, SURFACE_PED, static_cast<eSurfaceType>(surfaceId), m_pPed->GetPosition(), nullptr, 1.0f, 1.0f, true, false);
+            break;
+        }
+        case AE_PED_HIT_GROUND_KICK:
+        case AE_PED_HIT_MARTIAL_KICK: {
+            AudioEngine.ReportCollision(m_pPed, physical, SURFACE_PED, static_cast<eSurfaceType>(surfaceId), m_pPed->GetPosition(), nullptr, 1.0f, 1.0f, true, false);
+            return;
+        }
+        case AE_PED_HIT_HIGH_UNARMED:
+        case AE_PED_HIT_LOW_UNARMED:
+        case AE_PED_HIT_MARTIAL_PUNCH: {
+            sfxId = 58;
+            volOffset2 = plugin::CallAndReturn<float, 0x4DA510, uint8>(surfaceId);
+            AudioEngine.ReportCollision(m_pPed, physical, SURFACE_PED, static_cast<eSurfaceType>(surfaceId), m_pPed->GetPosition(), nullptr, 1.0f, 1.0f, true, false);
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    if (sfxId >= 0) {
+        m_tempSound.Initialise(
+            bankSlot1,
+            static_cast<eSoundID>(sfxId),
+            this,
+            m_pPed->GetPosition(),
+            finalVolume + volOffset1,
+            1.0f,
+            1.0f,
+            1.0f,
+            0,
+            SOUND_LIFESPAN_TIED_TO_PHYSICAL_ENTITY,
+            freqVariance,
+            0
+        );
+        m_tempSound.RegisterWithPhysicalEntity(m_pPed);
+        if (maxVol > 0) {
+            m_tempSound.m_Speed = 0.0f;
+            m_tempSound.m_SpeedVariance = 0.0f;
+            m_tempSound.m_ClientVariable = static_cast<float>(CTimer::GetTimeInMS() + maxVol);
+            m_tempSound.m_Event = event;
+            m_tempSound.SetFlags(SOUND_REQUEST_UPDATES, 1);
+        }
+        AESoundManager.RequestNewSound(&m_tempSound);
+    }
+
+    if (sfxId2 >= 0) {
+        m_tempSound.Initialise(
+            SND_BANK_SLOT_WEAPON_GEN,
+            static_cast<eSoundID>(sfxId2),
+            this,
+            m_pPed->GetPosition(),
+            finalVolume + volOffset2,
+            1.0f,
+            1.0f,
+            1.0f,
+            0,
+            SOUND_LIFESPAN_TIED_TO_PHYSICAL_ENTITY,
+            0.0588f,
+            0
+        );
+        m_tempSound.RegisterWithPhysicalEntity(m_pPed);
+        if (maxVol > 0) {
+            m_tempSound.m_Speed = 0.0f;
+            m_tempSound.m_SpeedVariance = 0.0f;
+            m_tempSound.m_ClientVariable = static_cast<float>(CTimer::GetTimeInMS() + maxVol);
+            m_tempSound.m_Event = event;
+            m_tempSound.SetFlags(SOUND_REQUEST_UPDATES, 1);
+        }
+        AESoundManager.RequestNewSound(&m_tempSound);
+    }
 }
 
 // 0x4E2350
 void CAEPedAudioEntity::HandlePedJacked(eAudioEvents event) {
-    plugin::CallMethod<0x4E2350, CAEPedAudioEntity*, int32>(this, event);
+    if (!AEAudioHardware.IsSoundBankLoaded(SND_BANK_GENRL_WEAPONS, SND_BANK_SLOT_WEAPON_GEN)) {
+        if (!AudioEngine.IsLoadingTuneActive()) {
+            AEAudioHardware.LoadSoundBank(SND_BANK_GENRL_WEAPONS, SND_BANK_SLOT_WEAPON_GEN);
+        }
+        return;
+    }
+
+    const float volume = GetDefaultVolume(event);
+    const uint32 curTime = CTimer::GetTimeInMS();
+
+    int16 sfxId1 = -1;
+    int16 sfxId2 = -1;
+    uint32 delayTime1 = 0;
+    uint32 delayTime2 = 0;
+
+    switch (event) {
+    case AE_PED_JACKED_CAR_PUNCH:
+        sfxId1 = 58;
+        sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(40, 43));
+        delayTime1 = curTime + 500;
+        delayTime2 = curTime + 2133;
+        break;
+    case AE_PED_JACKED_CAR_HEAD_BANG:
+        sfxId1 = 50;
+        sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(36, 39));
+        delayTime1 = curTime + 933;
+        delayTime2 = curTime + 2633;
+        break;
+    case AE_PED_JACKED_CAR_KICK:
+        sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(40, 43));
+        delayTime1 = curTime + 900;
+        delayTime2 = curTime + 2800;
+        break;
+    case AE_PED_JACKED_BIKE:
+        sfxId1 = 58;
+        sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(40, 43));
+        delayTime1 = curTime + 33;
+        delayTime2 = curTime + 366;
+        break;
+    case AE_PED_JACKED_DOZER:
+        sfxId2 = static_cast<int16>(CAEAudioUtility::GetRandomNumberInRange(36, 39));
+        delayTime1 = curTime + 266;
+        delayTime2 = curTime + 833;
+        break;
+    default:
+        break;
+    }
+
+    if (sfxId1 >= 0) {
+        m_tempSound.Initialise(
+            SND_BANK_SLOT_WEAPON_GEN,
+            static_cast<eSoundID>(sfxId1),
+            this,
+            m_pPed->GetPosition(),
+            volume,
+            2.0f,
+            1.0f,
+            1.0f,
+            0,
+            SOUND_LIFESPAN_TIED_TO_PHYSICAL_ENTITY | SOUND_REQUEST_UPDATES,
+            0.0f,
+            0
+        );
+        m_tempSound.RegisterWithPhysicalEntity(m_pPed);
+        m_tempSound.m_ClientVariable = static_cast<float>(delayTime1);
+        m_tempSound.m_Event = event;
+        AESoundManager.RequestNewSound(&m_tempSound);
+    }
+
+    if (sfxId2 >= 0) {
+        m_tempSound.Initialise(
+            SND_BANK_SLOT_WEAPON_GEN,
+            static_cast<eSoundID>(sfxId2),
+            this,
+            m_pPed->GetPosition(),
+            volume,
+            2.0f,
+            1.0f,
+            1.0f,
+            0,
+            SOUND_LIFESPAN_TIED_TO_PHYSICAL_ENTITY | SOUND_REQUEST_UPDATES,
+            0.0f,
+            0
+        );
+        m_tempSound.RegisterWithPhysicalEntity(m_pPed);
+        m_tempSound.m_ClientVariable = static_cast<float>(delayTime1);
+        m_tempSound.m_Event = event;
+        AESoundManager.RequestNewSound(&m_tempSound);
+    }
+
+    if (!AEAudioHardware.IsSoundBankLoaded(SND_BANK_GENRL_CAR_COLLISION, SND_BANK_SLOT_FOOTSTEPS_GENERIC)) {
+        AEAudioHardware.LoadSoundBank(SND_BANK_GENRL_CAR_COLLISION, SND_BANK_SLOT_FOOTSTEPS_GENERIC);
+        return;
+    }
+
+    m_tempSound.Initialise(
+        SND_BANK_SLOT_FOOTSTEPS_GENERIC,
+        static_cast<eSoundID>(0),
+        this,
+        m_pPed->GetPosition(),
+        volume,
+        2.0f,
+        1.0f,
+        1.0f,
+        0,
+        SOUND_LIFESPAN_TIED_TO_PHYSICAL_ENTITY | SOUND_REQUEST_UPDATES,
+        0.0f,
+        0
+    );
+    m_tempSound.RegisterWithPhysicalEntity(m_pPed);
+    m_tempSound.m_ClientVariable = static_cast<float>(delayTime2);
+    m_tempSound.m_Event = event;
+    AESoundManager.RequestNewSound(&m_tempSound);
 }
 
 // 0x4E26A0
@@ -562,5 +1081,81 @@ void CAEPedAudioEntity::PlayShirtFlap(float volume, float speed) {
 
 // 0x4E2EE0
 void CAEPedAudioEntity::Service() {
-    plugin::CallMethod<0x4E2EE0, CAEPedAudioEntity*>(this);
+    float volume = -100.0f;
+    float speed = 1.0f;
+    bool bCheckMovement = true;
+    bool bUsingParachute = false;
+    float blendSkyDive = 0.0f;
+    float blendParaDecel = 0.0f;
+
+    if (!m_pPed->IsPlayer()) {
+        return;
+    }
+
+    if ((m_pPed->m_standingOnEntity && m_pPed->m_standingOnEntity->IsVehicle()) || m_pPed->bInVehicle) {
+        bCheckMovement = false;
+    }
+
+    if (m_pPed->m_nPedState == PEDSTATE_DRIVING && m_pPed->m_pVehicle) {
+        CVehicle* veh = m_pPed->m_pVehicle;
+        if (veh->m_nVehicleSubClass == VEHICLE_SUBCLASS_BIKE ||
+            (veh->m_nVehicleSubClass == VEHICLE_SUBCLASS_AUTOMOBILE && veh->IsOpenTopCar())) {
+            float vehSpeed = veh->m_vecMoveSpeed.Magnitude();
+            if (vehSpeed != 0.0f) {
+                float baseVolume = veh->IsMissionVehicle() ? -17.0f : -10.0f;
+                float clampedSpeed = std::clamp(vehSpeed, 0.0f, 1.0f);
+                volume = baseVolume + 20.0f * CAEAudioUtility::AudioLog10(clampedSpeed);
+                speed = 0.8f + clampedSpeed * 0.4f;
+            }
+        }
+    }
+
+    if (m_pPed->m_pPedIntelligence) {
+        bUsingParachute = m_pPed->m_pPedIntelligence->GetUsingParachute();
+    }
+
+    if (bCheckMovement) {
+        float speedNorm = m_pPed->m_vecMoveSpeed.Magnitude() / 0.7f;
+        float baseVolume = -16.0f;
+        if (bUsingParachute) {
+            baseVolume = -7.0f;
+            if (m_pPed->m_pRwClump) {
+                if (auto* anim = RpAnimBlendClumpGetAssociation(m_pPed->m_pRwClump, "FALL_SkyDive_accel")) {
+                    blendSkyDive = std::clamp(anim->m_fBlendAmount, 0.0f, 1.0f);
+                }
+                if (auto* anim = RpAnimBlendClumpGetAssociation(m_pPed->m_pRwClump, "Para_decel")) {
+                    blendParaDecel = std::clamp(anim->m_fBlendAmount, 0.0f, 1.0f);
+                }
+            }
+        } else {
+            if (speedNorm <= 0.5f) {
+                speedNorm = 0.0f;
+            } else {
+                speedNorm = (speedNorm - 0.5f) / 0.5f;
+            }
+        }
+
+        speedNorm = std::clamp(speedNorm, 0.0f, 1.0f);
+        volume = baseVolume + 20.0f * CAEAudioUtility::AudioLog10(speedNorm);
+        speed = 0.8f + speedNorm * 0.8f;
+    }
+
+    float finalSpeed = speed * (1.0f + 0.5f * blendSkyDive);
+    float targetVolume = volume + 4.0f * blendSkyDive - 6.0f * blendParaDecel;
+
+    if (targetVolume > field_158) {
+        field_158 = std::min(targetVolume, field_158 + 5.0f);
+    } else if (targetVolume < field_158) {
+        field_158 = std::max(targetVolume, field_158 - 2.0f);
+    }
+
+    if (targetVolume < -20.0f && field_158 < -20.0f) {
+        field_158 = targetVolume;
+    }
+
+    if (field_158 > -100.0f) {
+        PlayShirtFlap(field_158, finalSpeed);
+    } else {
+        m_sTwinLoopSoundEntity.StopSoundAndForget();
+    }
 }

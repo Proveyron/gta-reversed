@@ -16107,22 +16107,22 @@
     {
         "Category": "CCustomBuildingRenderer",
         "Name": "AtomicSetup",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CCustomBuildingRenderer",
         "Name": "IsCBPCPipelineAttached",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CCustomBuildingRenderer",
         "Name": "UpdateDayNightBalanceParam",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CCustomBuildingRenderer",
         "Name": "Update",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CProjectileInfo",
@@ -21547,7 +21547,7 @@
     {
         "Category": "CEventHandler",
         "Name": "ComputeKnockOffBikeResponse",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CEventHandler",
@@ -21587,12 +21587,12 @@
     {
         "Category": "CEventHandler",
         "Name": "ComputePedCollisionWithPedResponse",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CEventHandler",
         "Name": "ComputePedCollisionWithPlayerResponse",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CEventHandler",
@@ -35382,17 +35382,17 @@
     {
         "Category": "CAEPedAudioEntity",
         "Name": "HandlePedSwing",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEPedAudioEntity",
         "Name": "HandlePedHit",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEPedAudioEntity",
         "Name": "HandlePedJacked",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEPedAudioEntity",
@@ -35412,7 +35412,7 @@
     {
         "Category": "CAEPedAudioEntity",
         "Name": "Service",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEPedlessSpeechAudioEntity",
@@ -37042,7 +37042,7 @@
     {
         "Category": "CAEStreamingChannel",
         "Name": "Constructor",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEStreamingChannel",
@@ -37057,7 +37057,7 @@
     {
         "Category": "CAEStreamingChannel",
         "Name": "PrepareStream",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEStreamingChannel",
@@ -37127,7 +37127,7 @@
     {
         "Category": "CAEStreamingChannel",
         "Name": "Service",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CAEStreamingChannel",

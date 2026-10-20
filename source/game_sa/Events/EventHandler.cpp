@@ -131,6 +131,12 @@
 #include "Events/EventPedToChase.h"
 #include "Events/EventPedToFlee.h"
 #include "Events/EventPlayerCollisionWithPed.h"
+#include "Events/EventKnockOffBike.h"
+#include "Events/EventPedCollisionWithPed.h"
+#include "Events/EventPedCollisionWithPlayer.h"
+#include "PedDamageResponseCalculator.h"
+#include "Tasks/TaskComplexSequence.h"
+#include "Tasks/TaskTypes/TaskComplexFollowPointRoute.h"
 #include "Events/EventPotentialWalkIntoPed.h"
 #include "Events/EventHealthReallyLow.h"
 #include "Events/EventRevived.h"
@@ -262,7 +268,7 @@ void CEventHandler::InjectHooks() {
     RH_ScopedInstall(ComputeHighAngerAtPlayerResponse, 0x4BAC10);
     RH_ScopedInstall(ComputeInWaterResponse, 0x4BAF80);
     RH_ScopedInstall(ComputeInteriorUseInfoResponse, 0x4BAFE0);
-    RH_ScopedInstall(ComputeKnockOffBikeResponse, 0x4B9FF0, { .Reversed = false });
+    RH_ScopedInstall(ComputeKnockOffBikeResponse, 0x4B9FF0);
     RH_ScopedInstall(ComputeLowAngerAtPlayerResponse, 0x4BAAD0);
     RH_ScopedInstall(ComputeLowHealthResponse, 0x4BA990);
     RH_ScopedInstall(ComputeObjectCollisionPassiveResponse, 0x4BBB90);
@@ -270,8 +276,8 @@ void CEventHandler::InjectHooks() {
     RH_ScopedInstall(ComputeOnEscalatorResponse, 0x4BC150);
     RH_ScopedInstall(ComputeOnFireResponse, 0x4BAD50);
     RH_ScopedInstall(ComputePassObjectResponse, 0x4BB0C0);
-    RH_ScopedInstall(ComputePedCollisionWithPedResponse, 0x4BDB80, { .Reversed = false });
-    RH_ScopedInstall(ComputePedCollisionWithPlayerResponse, 0x4BE7D0, { .Reversed = false });
+    RH_ScopedInstall(ComputePedCollisionWithPedResponse, 0x4BDB80);
+    RH_ScopedInstall(ComputePedCollisionWithPlayerResponse, 0x4BE7D0);
     RH_ScopedInstall(ComputePedEnteredVehicleResponse, 0x4C1590);
     RH_ScopedInstall(ComputePedFriendResponse, 0x4B9DD0);
     RH_ScopedInstall(ComputePedSoundQuietResponse, 0x4B9D40);
@@ -1467,7 +1473,211 @@ void CEventHandler::ComputeInteriorUseInfoResponse(CEventInteriorUseInfo* e, CTa
 
 // 0x4B9FF0
 void CEventHandler::ComputeKnockOffBikeResponse(CEvent* e, CTask* tactive, CTask* tsimplest) {
-    plugin::CallMethod<0x4B9FF0, CEventHandler*, CEvent*, CTask*, CTask*>(this, e, tactive, tsimplest);
+    CEventKnockOffBike knockOffBikeEvent{};
+    CEventKnockOffBike* eventToUse = nullptr;
+
+    switch (e->GetEventType()) {
+    case EVENT_KNOCK_OFF_BIKE: {
+        eventToUse = static_cast<CEventKnockOffBike*>(e);
+        CEventDamage damageEvent{
+            eventToUse->m_vehicle,
+            CTimer::m_snTimeInMilliseconds,
+            WEAPON_RAMMEDBYCAR,
+            PED_PIECE_TORSO,
+            2,
+            true,
+            false
+        };
+        if (damageEvent.AffectsPed(m_Ped)) {
+            CPedDamageResponseCalculator calc{
+                eventToUse->m_vehicle,
+                eventToUse->m_damageIntensity,
+                WEAPON_RAMMEDBYCAR,
+                PED_PIECE_TORSO,
+                true
+            };
+            eDamageResponse damageResponse{};
+            calc.ComputeDamageResponse(m_Ped, &damageResponse, true);
+        }
+        break;
+    }
+    case EVENT_DAMAGE: {
+        auto eDamage = static_cast<CEventDamage*>(e);
+        auto veh = m_Ped->m_pVehicle;
+        if (!veh) {
+            return;
+        }
+        CVector moveSpeed = veh->m_vecMoveSpeed * 0.1f;
+        CVector impactVelocity{};
+        switch (eDamage->m_nDirection) {
+        case 0:
+            impactVelocity = veh->GetForward() * -1.0f;
+            break;
+        case 1:
+            impactVelocity = veh->GetRight();
+            break;
+        case 2:
+            impactVelocity = veh->GetUp();
+            break;
+        default:
+            impactVelocity = veh->GetRight() * -1.0f;
+            break;
+        }
+        knockOffBikeEvent = CEventKnockOffBike{
+            veh,
+            moveSpeed,
+            impactVelocity,
+            50.0f,
+            0.0f,
+            (uint8)eDamage->m_pSourceEntity,
+            (uint8)eDamage->m_nDirection,
+            0,
+            nullptr,
+            false,
+            false
+        };
+        eventToUse = &knockOffBikeEvent;
+        break;
+    }
+    case EVENT_VEHICLE_DIED:
+    case EVENT_VEHICLE_ON_FIRE: {
+        auto veh = m_Ped->m_pVehicle;
+        if (!veh) {
+            return;
+        }
+        CVector moveSpeed = veh->m_vecMoveSpeed * 0.1f;
+        uint32 randVal = (uint32)CGeneral::GetRandomNumberInRange(0, 4);
+        CVector impactVelocity{};
+        switch (randVal) {
+        case 0:
+            impactVelocity = veh->GetForward() * -1.0f;
+            break;
+        case 1:
+            impactVelocity = veh->GetRight();
+            break;
+        case 2:
+            impactVelocity = veh->GetUp();
+            break;
+        default:
+            impactVelocity = veh->GetRight() * -1.0f;
+            break;
+        }
+        knockOffBikeEvent = CEventKnockOffBike{
+            veh,
+            moveSpeed,
+            impactVelocity,
+            50.0f,
+            0.0f,
+            (uint8)KNOCK_OFF_TYPE_FALL,
+            (uint8)randVal,
+            0,
+            nullptr,
+            false,
+            false
+        };
+        eventToUse = &knockOffBikeEvent;
+        break;
+    }
+    default:
+        break;
+    }
+
+    if (!eventToUse || !eventToUse->m_vehicle) {
+        return;
+    }
+
+    auto veh = eventToUse->m_vehicle;
+    if (veh->m_pDriver != m_Ped &&
+        veh->m_apPassengers[0] != m_Ped &&
+        veh->m_apPassengers[1] != m_Ped &&
+        veh->m_apPassengers[2] != m_Ped) {
+        return;
+    }
+
+    g_InterestingEvents.Add(INTERESTING_EVENT_KNOCKED_OFF_BIKE, m_Ped);
+
+    if (!eventToUse->SetPedSafePosition(m_Ped)) {
+        if (m_Ped->bInVehicle) {
+            m_Ped->m_bIsStanding = false;
+        }
+        return;
+    }
+
+    eventToUse->SetPedOutCar(m_Ped);
+    auto animId = (AnimationId)eventToUse->CalcForcesAndAnims(m_Ped);
+
+    if (eventToUse->m_knockOffType == KNOCK_OFF_TYPE_NONE_1) {
+        m_Ped->bInVehicle = false;
+        m_Ped->bKnockedUpIntoAir = true;
+        m_Ped->physicalFlags.bApplyGravity = true;
+
+        if (m_Ped->m_fHealth > 0.0f) {
+            m_EventResponseTask = new CTaskComplexInAirAndLand{false, false};
+        } else {
+            m_EventResponseTask = new CTaskComplexDie{
+                (eWeaponType)eventToUse->m_knockOffType,
+                ANIM_GROUP_DEFAULT,
+                animId,
+                4.0f
+            };
+        }
+    } else {
+        if (m_Ped->m_fHealth <= 0.0f) {
+            if (animId == ANIM_ID_KO_SKID_FRONT) {
+                switch (eventToUse->m_knockOffDirection) {
+                case 0: animId = ANIM_ID_KO_SKID_BACK; break;
+                case 1: animId = ANIM_ID_KO_SPIN_L; break;
+                case 2: animId = ANIM_ID_KO_SPIN_R; break;
+                default: break;
+                }
+            }
+            m_EventResponseTask = new CTaskComplexDie{
+                (eWeaponType)eventToUse->m_knockOffType,
+                ANIM_GROUP_DEFAULT,
+                animId,
+                4.0f
+            };
+            m_Ped->bInVehicle = false;
+            if (veh->m_nVehicleSubClass == VEHICLE_BMX) {
+                veh->AsBike()->bikeFlags.bOnSideStand = false;
+            }
+        } else if (eventToUse->m_knockOffType != KNOCK_OFF_TYPE_NONE) {
+            m_EventResponseTask = new CTaskComplexFallAndGetUp{
+                animId,
+                ANIM_GROUP_DEFAULT,
+                (int32)eventToUse->m_time
+            };
+
+            auto pedGroup = CPedGroups::GetPedsGroup(m_Ped);
+            if (pedGroup) {
+                auto& membership = pedGroup->GetMembership();
+                if (!membership.IsLeader(m_Ped) && !eventToUse->m_isVictimDriver) {
+                    auto leader = membership.GetLeader();
+                    if (leader && leader->bInVehicle) {
+                        auto leaderEnterCar = leader->GetTaskManager().FindActiveTaskByType(TASK_COMPLEX_ENTER_CAR_AS_DRIVER);
+                        if (!leaderEnterCar) {
+                            auto seq = new CTaskComplexSequence{};
+                            seq->AddTask(m_EventResponseTask);
+                            seq->AddTask(new CTaskComplexEnterCarAsPassenger{veh, 0, false});
+                            m_EventResponseTask = seq;
+                        }
+                    }
+                } else if (membership.IsLeader(m_Ped)) {
+                    CEventGroupEvent groupEvent{m_Ped, new CEventLeaderExitedCarAsDriver{}};
+                    pedGroup->GetGroupIntelligence().AddEvent(&groupEvent);
+                }
+            }
+            m_Ped->bInVehicle = false;
+        }
+    }
+
+    if (eventToUse->m_ped) {
+        CEventDraggedOutCar draggedOutEvent{veh, eventToUse->m_ped, (bool)eventToUse->m_isVictimDriver};
+        m_Ped->GetIntelligence()->m_eventGroup.Add(&draggedOutEvent, false);
+        if (veh->m_nVehicleSubClass == VEHICLE_BMX) {
+            veh->AsBike()->bikeFlags.bOnSideStand = true;
+        }
+    }
 }
 
 // 0x4BAAD0
@@ -1561,12 +1771,236 @@ void CEventHandler::ComputePassObjectResponse(CEventPassObject* e, CTask* tactiv
 
 // 0x4BDB80
 void CEventHandler::ComputePedCollisionWithPedResponse(CEvent* e, CTask* tactive, CTask* tsimplest) {
-    plugin::CallMethod<0x4BDB80, CEventHandler*, CEvent*, CTask*, CTask*>(this, e, tactive, tsimplest);
+    auto collEvent = static_cast<CEventPedCollisionWithPed*>(e);
+    auto victim = collEvent->m_victim;
+    if (!victim) {
+        return;
+    }
+
+    const auto victimToPed = victim->GetPosition() - m_Ped->GetPosition();
+    const bool isCollisionInFrontOfPed = victimToPed.Dot(m_Ped->GetForward()) >= 0.0f;
+    const bool isCollisionBehindVictim = victimToPed.Dot(victim->GetForward()) < 0.0f;
+
+    auto moveState = collEvent->m_movestate;
+    auto victimMoveState = collEvent->m_victimMoveState;
+
+    auto pedGroup = CPedGroups::GetPedsGroup(m_Ped);
+    auto victimGroup = CPedGroups::GetPedsGroup(victim);
+    bool sameGroup = (pedGroup && pedGroup == victimGroup);
+    if (sameGroup) {
+        auto leader = pedGroup->GetMembership().GetLeader();
+        if (victim == leader) {
+            victim->bIsLeader = true;
+        }
+        if (m_Ped == leader) {
+            m_Ped->bIsLeader = true;
+        }
+    }
+
+    if (victim->IsPlayer()) {
+        m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+        return;
+    }
+
+    const auto DoLookAt = [&](CPed* looker, int32 time) {
+        g_ikChainMan.LookAt(
+            "CompPedCollPedResp",
+            looker,
+            looker == victim ? m_Ped : victim,
+            time,
+            BONE_HEAD,
+            nullptr,
+            true,
+            0.25f,
+            500,
+            3,
+            false
+        );
+    };
+
+    if (sameGroup) {
+        if (moveState == PEDMOVE_STILL || victimMoveState == PEDMOVE_STILL) {
+            if (isCollisionInFrontOfPed) {
+                if (CGeneral::GetRandomNumberInRange(0.0f, 1.0f) >= 0.5f) {
+                    float r = CGeneral::GetRandomNumberInRange(0.0f, 1.0f);
+                    if (r < 0.75f) {
+                        DoLookAt(m_Ped, 2000);
+                    } else if (r >= 0.75f) {
+                        m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                    }
+                }
+            }
+        }
+    } else {
+        if (moveState == PEDMOVE_STILL || victimMoveState == PEDMOVE_STILL) {
+            CVector right = m_Ped->GetRight();
+            CVector dir{-right.y, right.x, 0.0f};
+            dir.Normalise();
+            m_EventResponseTask = new CTaskComplexEvasiveStep{victim, dir};
+            return;
+        }
+    }
+
+    if (moveState == PEDMOVE_WALK) {
+        if (victimMoveState == PEDMOVE_NONE || victimMoveState == PEDMOVE_STILL) {
+            if (isCollisionInFrontOfPed) {
+                if (tsimplest && CTask::IsGoToTask(tsimplest)) {
+                    auto tGoTo = static_cast<CTaskSimpleGoTo*>(tsimplest);
+                    CPointRoute route{};
+                    if (CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(*m_Ped, *victim, tGoTo->m_vecTargetPoint, route, 0)) {
+                        m_EventResponseTask = new CTaskComplexFollowPointRoute{PEDMOVE_WALK, route, CTaskComplexFollowPointRoute::Mode::ONE_WAY, 0.5f, 0.0f, false, true, true};
+                        return;
+                    }
+                }
+            }
+        } else if (victimMoveState == PEDMOVE_WALK) {
+            if (isCollisionInFrontOfPed) {
+                if (tsimplest && CTask::IsGoToTask(tsimplest)) {
+                    auto tGoTo = static_cast<CTaskSimpleGoTo*>(tsimplest);
+                    CPointRoute route{};
+                    if (CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(*m_Ped, *victim, tGoTo->m_vecTargetPoint, route, 0)) {
+                        m_EventResponseTask = new CTaskComplexFollowPointRoute{PEDMOVE_WALK, route, CTaskComplexFollowPointRoute::Mode::ONE_WAY, 0.5f, 0.0f, false, true, true};
+                        return;
+                    }
+                }
+            } else if (isCollisionBehindVictim) {
+                DoLookAt(m_Ped, 2000);
+                m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                return;
+            }
+        }
+    } else if (moveState == PEDMOVE_RUN || moveState == PEDMOVE_SPRINT) {
+        if (victimMoveState == PEDMOVE_RUN || victimMoveState == PEDMOVE_SPRINT) {
+            if (isCollisionInFrontOfPed && isCollisionBehindVictim) {
+                auto pedWeakness = m_Ped->m_pStats->m_fDefendWeakness;
+                auto victimWeakness = victim->m_pStats->m_fDefendWeakness;
+                if ((pedWeakness <= 1.5f || victimWeakness <= 1.5f) && pedWeakness <= 1.5f || pedWeakness <= victimWeakness) {
+                    m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                } else {
+                    auto hitSide = CPedGeometryAnalyser::ComputePedHitSide(*victim, *m_Ped);
+                    m_EventResponseTask = new CTaskComplexHitResponse{(eDirection)hitSide};
+                }
+                return;
+            } else if (isCollisionInFrontOfPed) {
+                DoLookAt(m_Ped, 2000);
+                m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                return;
+            } else if (isCollisionBehindVictim) {
+                DoLookAt(m_Ped, 2000);
+                m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                return;
+            }
+        }
+    } else if (moveState == PEDMOVE_STILL || moveState == PEDMOVE_NONE) {
+        if (notsa::contains({PEDMOVE_WALK, PEDMOVE_RUN, PEDMOVE_SPRINT}, (eMoveState)victimMoveState)) {
+            if (isCollisionBehindVictim) {
+                if (victimMoveState == PEDMOVE_RUN || victimMoveState == PEDMOVE_SPRINT) {
+                    auto pedWeakness = m_Ped->m_pStats->m_fDefendWeakness;
+                    auto victimWeakness = victim->m_pStats->m_fDefendWeakness;
+                    if ((pedWeakness <= 1.5f || victimWeakness <= 1.5f) && pedWeakness <= 1.5f || pedWeakness <= victimWeakness) {
+                        m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                    } else {
+                        auto hitSide = CPedGeometryAnalyser::ComputePedHitSide(*victim, *m_Ped);
+                        m_EventResponseTask = new CTaskComplexHitResponse{(eDirection)hitSide};
+                    }
+                } else {
+                    m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                }
+                return;
+            }
+        }
+    }
+
+    if (m_EventResponseTask && victim->IsPlayer()) {
+        m_Ped->GetIntelligence()->m_mentalHealth.Add(1);
+    }
 }
 
 // 0x4BE7D0
 void CEventHandler::ComputePedCollisionWithPlayerResponse(CEvent* e, CTask* tactive, CTask* tsimplest) {
-    plugin::CallMethod<0x4BE7D0, CEventHandler*, CEvent*, CTask*, CTask*>(this, e, tactive, tsimplest);
+    auto collEvent = static_cast<CEventPedCollisionWithPlayer*>(e);
+    auto victim = collEvent->m_victim;
+    if (!victim) {
+        return;
+    }
+
+    const auto victimToPed = victim->GetPosition() - m_Ped->GetPosition();
+    const bool isCollisionInFrontOfPed = victimToPed.Dot(m_Ped->GetForward()) >= 0.0f;
+    const bool isCollisionBehindPlayer = victimToPed.Dot(victim->GetForward()) < 0.0f;
+
+    auto moveState = collEvent->m_movestate;
+    auto playerMoveState = victim->m_nMoveState;
+
+    const auto DoLookAt = [&](CPed* looker, int32 time) {
+        g_ikChainMan.LookAt(
+            "CompPedCollPlayerResp",
+            looker,
+            looker == victim ? m_Ped : victim,
+            time,
+            BONE_HEAD,
+            nullptr,
+            true,
+            0.25f,
+            500,
+            3,
+            false
+        );
+    };
+
+    if (playerMoveState == PEDMOVE_WALK || playerMoveState == PEDMOVE_RUN || playerMoveState == PEDMOVE_SPRINT) {
+        if (moveState == PEDMOVE_WALK) {
+            if (isCollisionInFrontOfPed) {
+                if (tsimplest && CTask::IsGoToTask(tsimplest)) {
+                    auto tGoTo = static_cast<CTaskSimpleGoTo*>(tsimplest);
+                    CPointRoute route{};
+                    if (CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(*m_Ped, *victim, tGoTo->m_vecTargetPoint, route, 0)) {
+                        m_EventResponseTask = new CTaskComplexFollowPointRoute{PEDMOVE_WALK, route, CTaskComplexFollowPointRoute::Mode::ONE_WAY, 0.5f, 0.0f, false, true, true};
+                        return;
+                    }
+                }
+            } else if (isCollisionBehindPlayer) {
+                DoLookAt(m_Ped, 2000);
+                m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                return;
+            }
+        } else if (moveState == PEDMOVE_RUN || moveState == PEDMOVE_SPRINT) {
+            if (isCollisionInFrontOfPed && isCollisionBehindPlayer) {
+                auto pedWeakness = m_Ped->m_pStats->m_fDefendWeakness;
+                auto playerWeakness = victim->m_pStats->m_fDefendWeakness;
+                if ((pedWeakness <= 1.5f || playerWeakness <= 1.5f) && pedWeakness <= 1.5f || pedWeakness <= playerWeakness) {
+                    m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                } else {
+                    auto hitSide = CPedGeometryAnalyser::ComputePedHitSide(*victim, *m_Ped);
+                    m_EventResponseTask = new CTaskComplexHitResponse{(eDirection)hitSide};
+                }
+                return;
+            } else if (isCollisionInFrontOfPed || isCollisionBehindPlayer) {
+                DoLookAt(m_Ped, 2000);
+                m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                return;
+            }
+        } else if (moveState == PEDMOVE_STILL || moveState == PEDMOVE_NONE) {
+            if (isCollisionBehindPlayer) {
+                if (playerMoveState == PEDMOVE_RUN || playerMoveState == PEDMOVE_SPRINT) {
+                    auto pedWeakness = m_Ped->m_pStats->m_fDefendWeakness;
+                    auto playerWeakness = victim->m_pStats->m_fDefendWeakness;
+                    if ((pedWeakness <= 1.5f || playerWeakness <= 1.5f) && pedWeakness <= 1.5f || pedWeakness <= playerWeakness) {
+                        m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                    } else {
+                        auto hitSide = CPedGeometryAnalyser::ComputePedHitSide(*victim, *m_Ped);
+                        m_EventResponseTask = new CTaskComplexHitResponse{(eDirection)hitSide};
+                    }
+                } else {
+                    m_SayTask = new CTaskSimpleSay{CTX_GLOBAL_BUMP};
+                }
+                return;
+            }
+        }
+    }
+
+    if (m_EventResponseTask) {
+        m_Ped->GetIntelligence()->m_mentalHealth.Add(1);
+    }
 }
 
 // 0x4C1590

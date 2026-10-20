@@ -1,16 +1,16 @@
-# Reimplementation progress (*): 92%
+# Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 00:33:18 UTC
+Last update was at Oct 20, 2026 at 00:52:05 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7666 out of 8295 functions done in 719 categories)
+## Stats (7680 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (662/719) [92%]
+#### Completely reversed categories (666/719) [93%]
 
 <details>
 <summary>See list of categories</summary>
@@ -191,6 +191,7 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 - CPickups (37)<br />
 - CPedIK (9)<br />
 - CCustomBuildingPipeline (7)<br />
+- CCustomBuildingRenderer (7)<br />
 - CPools (19)<br />
 - Securom (2)<br />
 - Rs (27)<br />
@@ -292,6 +293,7 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 - CEventEscalator (1)<br />
 - CEventDanger (4)<br />
 - CEventCopCarBeingStolen (2)<br />
+- CEventHandler (72)<br />
 - CEventAcquaintancePedHate (1)<br />
 - CEventAcquaintancePedHateBadlyLit (2)<br />
 - CRect (8)<br />
@@ -638,6 +640,7 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 - CAEFireAudioEntity (7)<br />
 - CAEFrontendAudioEntity (6)<br />
 - CAEGlobalWeaponAudioEntity (6)<br />
+- CAEPedAudioEntity (20)<br />
 - CAEPedlessSpeechAudioEntity (11)<br />
 - CAEPedSpeechAudioEntity (58)<br />
 - CAEWeaponAudioEntity (20)<br />
@@ -648,6 +651,7 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 - CAEAudioChannel (12)<br />
 - CAEAudioHardware (55)<br />
 - CAEStaticChannel (8)<br />
+- CAEStreamingChannel (24)<br />
 - CAEBankLoader (6)<br />
 - CAEDataStream (20)<br />
 - CAEStreamTransformer (2)<br />
@@ -679,7 +683,7 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 
 </details>
 
-#### Partially reversed categories (52/719) [7%]
+#### Partially reversed categories (48/719) [7%]
 
 <details>
 <summary>See list of categories</summary>
@@ -700,7 +704,6 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 - CCarEnterExit (27/32) [84%]<br />
 - CPathFind (54/62) [87%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
-- CCustomBuildingRenderer (3/7) [43%]<br />
 - CProjectileInfo (1/12) [8%]<br />
 - CShadows (21/31) [68%]<br />
 - CCam (20/45) [44%]<br />
@@ -708,7 +711,6 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 - FxEmitterBP_c (2/9) [22%]<br />
 - CPed (137/145) [94%]<br />
 - CPlayerPed (50/65) [77%]<br />
-- CEventHandler (69/72) [96%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
@@ -722,10 +724,8 @@ Last update was at Oct 20, 2026 at 00:33:18 UTC
 - CTaskComplexSunbathe (2/8) [25%]<br />
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
-- CAEPedAudioEntity (16/20) [80%]<br />
 - CAEScriptAudioEntity (8/19) [42%]<br />
 - CAEVehicleAudioEntity (102/106) [96%]<br />
-- CAEStreamingChannel (21/24) [88%]<br />
 - CAERadioTrackManager (29/43) [67%]<br />
 - CBike (22/40) [55%]<br />
 - CBmx (7/10) [70%]<br />
