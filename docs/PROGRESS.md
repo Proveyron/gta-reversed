@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 06:04:59 UTC
+Last update was at Oct 20, 2026 at 06:06:46 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7727 out of 8295 functions done in 719 categories)
+## Stats (7732 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (677/719) [94%]
+#### Completely reversed categories (678/719) [94%]
 
 <details>
 <summary>See list of categories</summary>
@@ -428,6 +428,7 @@ Last update was at Oct 20, 2026 at 06:04:59 UTC
 - CTaskComplexUseScriptedBrain (8)<br />
 - CTaskComplexUseScriptedAttractor (7)<br />
 - CTaskComplexWaitAtAttractor (7)<br />
+- CTaskComplexWaitForBus (7)<br />
 - CTaskComplexWaitForBackup (8)<br />
 - CTaskComplexWaitForDryWeather (7)<br />
 - CTaskComplexWalkAlongsidePed (9)<br />
@@ -694,7 +695,7 @@ Last update was at Oct 20, 2026 at 06:04:59 UTC
 
 </details>
 
-#### Partially reversed categories (38/719) [5%]
+#### Partially reversed categories (37/719) [5%]
 
 <details>
 <summary>See list of categories</summary>
@@ -721,7 +722,6 @@ Last update was at Oct 20, 2026 at 06:04:59 UTC
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
 - CTaskComplexLeaveCarAndWander (2/8) [25%]<br />
 - CTaskComplexSmartFleePoint (2/12) [17%]<br />
-- CTaskComplexWaitForBus (2/7) [29%]<br />
 - CTaskSimpleCarDrive (7/13) [54%]<br />
 - CTaskComplexFollowLeaderInFormation (1/7) [14%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />

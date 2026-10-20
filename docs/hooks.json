@@ -26897,27 +26897,27 @@
   {
     "Category": "CTaskComplexWaitForBus",
     "Name": "Clone",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWaitForBus",
     "Name": "GetTaskType",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWaitForBus",
     "Name": "CreateNextSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWaitForBus",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWaitForBus",
     "Name": "ControlSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexWaitForBackup",
