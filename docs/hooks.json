@@ -23882,27 +23882,27 @@
     {
         "Category": "CTaskGoToVehicleAndLean",
         "Name": "Clone",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskGoToVehicleAndLean",
         "Name": "MakeAbortable",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskGoToVehicleAndLean",
         "Name": "CreateNextSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskGoToVehicleAndLean",
         "Name": "CreateFirstSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskGoToVehicleAndLean",
         "Name": "ControlSubTask",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CTaskLeanOnVehicle",

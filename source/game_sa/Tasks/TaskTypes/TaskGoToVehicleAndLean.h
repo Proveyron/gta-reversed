@@ -25,7 +25,7 @@ public:
     CTask* ControlSubTask(CPed* ped) override;
 
     void DoTidyUp(CPed* ped);
-    // CalcTargetPos(CPed* ped) 0x664770
+    CVector CalcTargetPos(CPed* ped);
 
 private:
     friend void InjectHooksMain();
