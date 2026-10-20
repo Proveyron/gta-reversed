@@ -178,7 +178,7 @@ void CVehicle::InjectHooks() {
     RH_ScopedInstall(CanPedLeanOut, 0x6D5CF0);
     RH_ScopedInstall(SetVehicleCreatedBy, 0x6D5D70);
     RH_ScopedInstall(SetupRender, 0x6D64F0);
-    RH_ScopedInstall(ProcessBikeWheel, 0x6D73B0, { .Reversed = false });
+    RH_ScopedInstall(ProcessBikeWheel, 0x6D73B0);
     RH_ScopedInstall(FindTyreNearestPoint, 0x6D7BC0);
     // RH_ScopedInstall(InflictDamage, 0x6D7C90);
     RH_ScopedInstall(KillPedsGettingInVehicle, 0x6D82F0);
@@ -215,8 +215,8 @@ void CVehicle::InjectHooks() {
     // RH_ScopedInstall(GetPlaneWeaponFiringStatus, 0x6E3440);
     // RH_ScopedInstall(ProcessWeapons, 0x6E3950);
     RH_ScopedInstall(DoFixedMachineGuns, 0x73F400);
-    RH_ScopedInstall(FireFixedMachineGuns, 0x73DF00, { .Reversed = false });
-    RH_ScopedInstall(DoDriveByShootings, 0x741FD0, { .Reversed = false });
+    RH_ScopedInstall(FireFixedMachineGuns, 0x73DF00);
+    RH_ScopedInstall(DoDriveByShootings, 0x741FD0);
     RH_ScopedInstall(ReleasePickedUpEntityWithWinch, 0x6D3CB0);
     RH_ScopedInstall(PickUpEntityWithWinch, 0x6D3CD0);
     RH_ScopedInstall(QueryPickedUpEntityWithWinch, 0x6D3CF0);
@@ -229,7 +229,7 @@ void CVehicle::InjectHooks() {
     RH_ScopedGlobalInstall(IsVehiclePointerValid, 0x6E38F0);
     // RH_ScopedGlobalInstall(RemoveUpgradeCB, 0x6D3300);
     // RH_ScopedGlobalInstall(FindUpgradeCB, 0x6D3370);
-    RH_ScopedGlobalOverloadedInstall(RemoveObjectsCB, "Object", 0x6D33B0, RwObject*(*)(RwObject*, void*), { .Reversed = false });
+    RH_ScopedGlobalOverloadedInstall(RemoveObjectsCB, "Object", 0x6D33B0, RwObject*(*)(RwObject*, void*));
     RH_ScopedGlobalOverloadedInstall(RemoveObjectsCB, "Frame", 0x6D3420, RwFrame*(*)(RwFrame*, void*));
     RH_ScopedGlobalInstall(CopyObjectsCB, 0x6D3450);
     // RH_ScopedGlobalInstall(FindReplacementUpgradeCB, 0x6D3490);
@@ -2285,7 +2285,30 @@ RpAtomic* FindUpgradeCB(RpAtomic* atomic, void* data) {
 
 // 0x6D33B0
 RwObject* RemoveObjectsCB(RwObject* object, void* data) {
-    return ((RwObject * (__cdecl*)(RwObject*, void*))0x6D33B0)(object, data);
+    if (RwObjectGetType(object) == rpATOMIC) {
+        auto atomic = reinterpret_cast<RpAtomic*>(object);
+        auto atomicId = CVisibilityPlugins::GetAtomicId(atomic);
+        if (data) {
+            *reinterpret_cast<uint32*>(data) = atomicId;
+        }
+        if (!(atomicId & ATOMIC_UPGRADE)) {
+            auto modelInfo = CVisibilityPlugins::GetModelInfo(atomic);
+            auto clump = atomic->clump;
+            auto frame = RpAtomicGetFrame(atomic);
+
+            RpClumpRemoveAtomic(clump, atomic);
+            RpAtomicDestroy(atomic);
+
+            if (CVisibilityPlugins::GetFrameHierarchyId(frame) == 0) {
+                RwFrameDestroy(frame);
+            }
+
+            if (modelInfo) {
+                modelInfo->RemoveRef();
+            }
+        }
+    }
+    return object;
 }
 
 // 0x6D3420
@@ -3294,11 +3317,135 @@ void CVehicle::ProcessWheel(CVector& wheelFwd, CVector& wheelRight,
 }
 
 // 0x6D73B0
-void CVehicle::ProcessBikeWheel(CVector& wheelFwd, CVector& wheelRight, CVector& wheelContactSpeed, CVector& wheelContactPoint, int32 wheelsOnGround, float thrust, float brake,
-                                float adhesion, float destabTraction, int8 wheelId, float* wheelSpeed, tWheelState* wheelState, eBikeWheelSpecial special, uint16 wheelStatus) {
-    plugin::CallMethod<0x6D73B0, CVehicle*, CVector&, CVector&, CVector&, CVector&, int32, float, float, float, float, char, float*, tWheelState*, eBikeWheelSpecial, uint16>(
-        this, wheelFwd, wheelRight, wheelContactSpeed, wheelContactPoint, wheelsOnGround, thrust, brake, destabTraction, adhesion, wheelId, wheelSpeed, wheelState, special,
-        wheelStatus);
+void CVehicle::ProcessBikeWheel(
+    CVector& wheelFwd,
+    CVector& wheelRight,
+    CVector& wheelContactSpeed,
+    CVector& wheelContactPoint,
+    int32 wheelsOnGround,
+    float thrust,
+    float brake,
+    float adhesion,
+    float destabTraction,
+    int8 wheelId,
+    float* wheelSpeed,
+    tWheelState* wheelState,
+    eBikeWheelSpecial special,
+    uint16 wheelStatus
+) {
+    static auto& bAlreadySkidding = StaticRef<bool>(0xC1CDAF);
+    static auto& bDriving         = StaticRef<bool>(0xC1CDB0);
+    static auto& bBraking         = StaticRef<bool>(0xC1CDB1);
+    static auto& bSpecialFlag     = StaticRef<bool>(0xC1CDB2);
+
+    float contactSpeedRight = DotProduct(wheelRight, wheelContactSpeed);
+    float contactSpeedFwd   = DotProduct(wheelFwd, wheelContactSpeed);
+
+    float fwd = 0.0f;
+    float right = 0.0f;
+
+    bSpecialFlag = (special != 0);
+    if (bSpecialFlag) {
+        bBraking = false;
+        bDriving = false;
+    } else {
+        bBraking = (brake != 0.0f);
+        bDriving = !bBraking && (thrust != 0.0f);
+    }
+
+    if (*wheelState != WHEEL_STATE_NORMAL) {
+        bAlreadySkidding = true;
+    }
+    bool wasAlreadySkidding = bAlreadySkidding;
+    *wheelState = WHEEL_STATE_NORMAL;
+
+    adhesion *= CTimer::GetTimeStep();
+    if (wasAlreadySkidding) {
+        adhesion *= m_pHandlingData->m_fTractionLoss;
+    }
+
+    if (special != 2 && special != 3) {
+        if (contactSpeedRight != 0.0f) {
+            right = -contactSpeedRight / (float)wheelsOnGround;
+            if (wheelStatus == WHEEL_STATUS_BURST) {
+                float fwdClamped = std::min(contactSpeedFwd, 0.45f);
+                float tyreMod = CGeneral::GetRandomNumberInRange(-0.15f, 0.15f);
+                right += fwdClamped * tyreMod;
+            }
+        }
+    }
+
+    if (bDriving) {
+        fwd = thrust;
+        right = std::clamp(right, -adhesion, adhesion);
+    } else if (contactSpeedFwd != 0.0f) {
+        fwd = -contactSpeedFwd / (float)wheelsOnGround;
+        if (!bBraking && std::fabs(m_fGasPedal) < 0.01f) {
+            if (m_nVehicleSubClass == VEHICLE_SUBCLASS_BIKE) {
+                if (fwd <= 0.0f || fwd >= 0.05f) {
+                    brake = gHandlingDataMgr.fWheelFriction * 0.6f / (m_pHandlingData->m_fMass + 200.0f);
+                }
+            } else if (m_nVehicleSubClass == VEHICLE_SUBCLASS_BMX) {
+                brake = gHandlingDataMgr.fWheelFriction * 0.5f / (m_pHandlingData->m_fMass + 200.0f);
+            } else {
+                brake = gHandlingDataMgr.fWheelFriction / m_pHandlingData->m_fMass;
+                if (m_nModelIndex == MODEL_RCBANDIT) {
+                    brake *= 0.2f;
+                }
+            }
+        }
+
+        if (brake > adhesion) {
+            if (std::fabs(contactSpeedFwd) > 0.005f) {
+                *wheelState = WHEEL_STATE_FIXED;
+            }
+        } else {
+            fwd = std::clamp(fwd, -brake, brake);
+        }
+    }
+
+    float speedSq = right * right + fwd * fwd;
+    float adhesionSq = adhesion * adhesion;
+
+    if (speedSq > adhesionSq) {
+        if (*wheelState != WHEEL_STATE_FIXED) {
+            if (bDriving && contactSpeedFwd < 0.1f) {
+                *wheelState = WHEEL_STATE_SPINNING;
+            } else {
+                *wheelState = WHEEL_STATE_SKIDDING;
+            }
+        }
+        float tractionLoss = wasAlreadySkidding ? 1.0f : m_pHandlingData->m_fTractionLoss;
+        float speed = std::sqrt(speedSq);
+        fwd *= adhesion * tractionLoss / speed;
+        right *= adhesion * tractionLoss / speed;
+
+        if (destabTraction < 1.0f) {
+            fwd *= destabTraction;
+        }
+    } else if (destabTraction < 1.0f) {
+        if (!wasAlreadySkidding) {
+            destabTraction *= m_pHandlingData->m_fTractionLoss;
+        }
+        if (speedSq > (adhesion * destabTraction) * (adhesion * destabTraction)) {
+            float speed = std::sqrt(speedSq);
+            fwd *= adhesion * destabTraction / speed;
+            right *= adhesion * destabTraction / speed;
+        }
+    }
+
+    if (fwd != 0.0f || right != 0.0f) {
+        CVector totalSpeed = fwd * wheelFwd + right * wheelRight;
+        CVector direction = totalSpeed;
+        float speed = totalSpeed.Magnitude();
+        direction.Normalise();
+
+        float force = speed * m_fMass;
+        float turnForce = speed * GetMass(wheelContactPoint, direction);
+
+        ApplyMoveForce(force * direction);
+        ApplyTurnForce(turnForce * direction, wheelContactPoint);
+    }
 }
 
 // 0x6D7BC0
@@ -5176,12 +5323,143 @@ void CVehicle::DoFixedMachineGuns() {
 
 // 0x73DF00
 void CVehicle::FireFixedMachineGuns() {
-    plugin::CallMethod<0x73DF00, CVehicle*>(this);
+    if (CTimer::GetTimeInMS() <= m_nGunFiringTime + 150) {
+        return;
+    }
+
+    CVector fwd = GetForward();
+    float fwd2DLen = std::sqrt(fwd.x * fwd.x + fwd.y * fwd.y);
+    if (fwd2DLen > 0.1f) {
+        fwd.x /= fwd2DLen;
+        fwd.y /= fwd2DLen;
+    } else {
+        fwd.x = 0.0f;
+        fwd.y = 1.0f;
+    }
+    fwd.z = 0.0f;
+
+    m_nGunFiringTime = CTimer::GetTimeInMS();
+
+    // Left gun
+    CVector leftOffset{2.0f, 2.5f, 1.0f};
+    CVector leftSource = *GetMatrix() * leftOffset;
+    CVector leftTarget = leftSource + fwd * 40.0f;
+    leftTarget.x += ((float)(rand() & 0xFF) - 128.0f) * 0.02f;
+    leftTarget.y += ((float)(rand() & 0xFF) - 128.0f) * 0.02f;
+    leftTarget.z += ((float)(rand() & 0xFF) - 128.0f) * 0.005f;
+
+    CWeapon::DoTankDoomAiming(this, m_pDriver, &leftSource, &leftTarget);
+    CWeapon::FireOneInstantHitRound(&leftSource, &leftTarget, 15);
+
+    // Right gun
+    CVector rightOffset{-2.0f, 2.5f, 1.0f};
+    CVector rightSource = *GetMatrix() * rightOffset;
+    CVector rightTarget = rightSource + fwd * 40.0f;
+    rightTarget.x += ((float)(rand() & 0xFF) - 128.0f) * 0.02f;
+    rightTarget.y += ((float)(rand() & 0xFF) - 128.0f) * 0.02f;
+    rightTarget.z += ((float)(rand() & 0xFF) - 128.0f) * 0.005f;
+
+    CWeapon::DoTankDoomAiming(this, m_pDriver, &rightSource, &rightTarget);
+    CWeapon::FireOneInstantHitRound(&rightSource, &rightTarget, 15);
+
+    AudioEngine.ReportWeaponAudioEvent(AE_WEAPON_FIRE, WEAPON_MINIGUN, this);
+
+    m_nAmmoInClip--;
+    if (m_nAmmoInClip == 0) {
+        m_nAmmoInClip = 20;
+        m_nGunFiringTime = CTimer::GetTimeInMS() + 1400;
+    }
 }
 
 // 0x741FD0
 void CVehicle::DoDriveByShootings() {
-    plugin::CallMethod<0x741FD0, CVehicle*>(this);
+    if (!m_pDriver) {
+        return;
+    }
+
+    auto pad = m_pDriver->GetPadFromPlayer();
+    if (!pad || !pad->GetEnablePlayerControls()) {
+        return;
+    }
+
+    auto driveByTask = m_pDriver->GetIntelligence()->GetTaskDriveBy();
+    if (!driveByTask) {
+        return;
+    }
+
+    auto& activeWeapon = m_pDriver->GetActiveWeapon();
+    auto weaponInfo = CWeaponInfo::GetWeaponInfo(activeWeapon.m_Type, 1);
+    if (weaponInfo->m_nWeaponFireModel != 4) {
+        return;
+    }
+
+    bool bFirePressed = false;
+    if (m_nVehicleSubClass == VEHICLE_SUBCLASS_BIKE) {
+        bFirePressed = pad->GetCarGunFired();
+    } else {
+        bFirePressed = pad->GetCarGunFired() != 0;
+    }
+
+    AnimationId animL = ANIM_ID_DRIVEBY_L;
+    AnimationId animR = ANIM_ID_DRIVEBY_R;
+    AnimationId animF = ANIM_ID_DRIVEBY_F;
+
+    if (GetVehicleAppearance() == VEHICLE_APPEARANCE_BIKE) {
+        animL = (AnimationId)0xCA;
+        animR = (AnimationId)0xCB;
+        animF = (AnimationId)0xCC;
+    } else if (m_nVehicleSubClass == VEHICLE_SUBCLASS_AUTOMOBILE) {
+        animF = (AnimationId)0xBF;
+        animL = (AnimationId)0x4C;
+        animR = (AnimationId)0x4D;
+    }
+
+    activeWeapon.Update(m_pDriver);
+
+    bool lookLeft = pad->GetLookLeft();
+    bool lookRight = pad->GetLookRight();
+
+    if (!lookLeft && !lookRight) {
+        if (activeWeapon.m_nAmmoInClip == 0) {
+            return;
+        }
+        if (activeWeapon.m_nAmmoInClip >= (uint32)weaponInfo->m_nAmmoClip) {
+            activeWeapon.m_nAmmoInClip = weaponInfo->m_nAmmoClip;
+        }
+        return;
+    }
+
+    if (activeWeapon.m_nAmmoInClip <= 0) {
+        return;
+    }
+
+    AnimationId animToUse = animF;
+    if (lookLeft) {
+        animToUse = animL;
+    } else if (lookRight) {
+        animToUse = animR;
+    }
+
+    auto assoc = RpAnimBlendClumpGetAssociation(m_pDriver->m_pRwClump, (uint32)animToUse);
+    if (!assoc || assoc->m_fBlendAmount <= 0.0f) {
+        assoc = CAnimManager::BlendAnimation(m_pDriver->m_pRwClump, ANIM_GROUP_DEFAULT, animToUse, 16.0f);
+    }
+
+    if (!assoc || (assoc->m_nFlags & ANIM_FLAG_FREEZE_LAST_FRAME)) {
+        return;
+    }
+
+    if (assoc->m_fCurrentTime < 0.2f) {
+        return;
+    }
+
+    if (bFirePressed) {
+        if (CTimer::GetTimeInMS() > activeWeapon.m_nTimer) {
+            CWeapon::DoDriveByAutoAiming(activeWeapon, m_pDriver, lookLeft, lookRight);
+            activeWeapon.m_nTimer = CTimer::GetTimeInMS() + 70;
+            m_pDriver->ShakeCam(250, 0);
+        }
+    }
 }
 
 // NOTSA

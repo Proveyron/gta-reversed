@@ -40047,7 +40047,7 @@
     {
         "Category": "CVehicle",
         "Name": "ProcessBikeWheel",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CVehicle",
@@ -40162,12 +40162,12 @@
     {
         "Category": "CVehicle",
         "Name": "FireFixedMachineGuns",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CVehicle",
         "Name": "DoDriveByShootings",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CVehicle",
@@ -40212,7 +40212,7 @@
     {
         "Category": "CVehicle",
         "Name": "RemoveObjectsCB-Object",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CVehicle",

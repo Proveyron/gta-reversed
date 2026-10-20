@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 00:57:57 UTC
+Last update was at Oct 20, 2026 at 01:01:25 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7690 out of 8295 functions done in 719 categories)
+## Stats (7694 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (669/719) [93%]
+#### Completely reversed categories (670/719) [93%]
 
 <details>
 <summary>See list of categories</summary>
@@ -675,6 +675,7 @@ Last update was at Oct 20, 2026 at 00:57:57 UTC
 - CHeli (11)<br />
 - CQuadBike (12)<br />
 - CTrailer (13)<br />
+- CVehicle (149)<br />
 - FurnitureGroup_c (6)<br />
 - FurnitureManager_c (7)<br />
 - FurnitureSubGroup_c (3)<br />
@@ -686,7 +687,7 @@ Last update was at Oct 20, 2026 at 00:57:57 UTC
 
 </details>
 
-#### Partially reversed categories (45/719) [6%]
+#### Partially reversed categories (44/719) [6%]
 
 <details>
 <summary>See list of categories</summary>
@@ -732,7 +733,6 @@ Last update was at Oct 20, 2026 at 00:57:57 UTC
 - CMonsterTruck (5/11) [45%]<br />
 - CPlane (14/23) [61%]<br />
 - CTrain (21/41) [51%]<br />
-- CVehicle (145/149) [97%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
 - CRunningScript (24/39) [62%]<br />
 
