@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 00:52:05 UTC
+Last update was at Oct 20, 2026 at 00:57:57 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7680 out of 8295 functions done in 719 categories)
+## Stats (7690 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (666/719) [93%]
+#### Completely reversed categories (669/719) [93%]
 
 <details>
 <summary>See list of categories</summary>
@@ -155,6 +155,7 @@ Last update was at Oct 20, 2026 at 00:52:05 UTC
 - CInformGroupEvent (3)<br />
 - CInformGroupEventQueue (4)<br />
 - CGangs (8)<br />
+- CPlayerInfo (28)<br />
 - CReplay (47)<br />
 - CDarkel (19)<br />
 - CGeneral (9)<br />
@@ -217,6 +218,7 @@ Last update was at Oct 20, 2026 at 00:52:05 UTC
 - CCarAI (25)<br />
 - CCarFXRenderer (10)<br />
 - FxSystemBP_c (10)<br />
+- FxSystem_c (35)<br />
 - FxSphere_c (4)<br />
 - FxPrimBP_c (2)<br />
 - FxMemoryPool_c (5)<br />
@@ -668,6 +670,7 @@ Last update was at Oct 20, 2026 at 00:52:05 UTC
 - CAESoundManager (14)<br />
 - CAEUserRadioTrackManager (15)<br />
 - CAutomobile (100)<br />
+- CBmx (10)<br />
 - CBoat (23)<br />
 - CHeli (11)<br />
 - CQuadBike (12)<br />
@@ -683,7 +686,7 @@ Last update was at Oct 20, 2026 at 00:52:05 UTC
 
 </details>
 
-#### Partially reversed categories (48/719) [7%]
+#### Partially reversed categories (45/719) [6%]
 
 <details>
 <summary>See list of categories</summary>
@@ -700,14 +703,12 @@ Last update was at Oct 20, 2026 at 00:52:05 UTC
 - CStencilShadows (9/13) [69%]<br />
 - CCamera (97/114) [85%]<br />
 - CPedGroups (2/11) [18%]<br />
-- CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
 - CPathFind (54/62) [87%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
 - CProjectileInfo (1/12) [8%]<br />
 - CShadows (21/31) [68%]<br />
 - CCam (20/45) [44%]<br />
-- FxSystem_c (31/35) [89%]<br />
 - FxEmitterBP_c (2/9) [22%]<br />
 - CPed (137/145) [94%]<br />
 - CPlayerPed (50/65) [77%]<br />
@@ -728,7 +729,6 @@ Last update was at Oct 20, 2026 at 00:52:05 UTC
 - CAEVehicleAudioEntity (102/106) [96%]<br />
 - CAERadioTrackManager (29/43) [67%]<br />
 - CBike (22/40) [55%]<br />
-- CBmx (7/10) [70%]<br />
 - CMonsterTruck (5/11) [45%]<br />
 - CPlane (14/23) [61%]<br />
 - CTrain (21/41) [51%]<br />
