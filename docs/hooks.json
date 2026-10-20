@@ -30017,7 +30017,7 @@
   {
     "Category": "CTaskComplexFollowLeaderInFormation",
     "Name": "Constructor",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexFollowLeaderInFormation",
@@ -30027,27 +30027,27 @@
   {
     "Category": "CTaskComplexFollowLeaderInFormation",
     "Name": "Clone",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexFollowLeaderInFormation",
     "Name": "GetTaskType",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexFollowLeaderInFormation",
     "Name": "CreateNextSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexFollowLeaderInFormation",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexFollowLeaderInFormation",
     "Name": "ControlSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimpleHitHead",
