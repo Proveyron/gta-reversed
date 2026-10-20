@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 06:06:46 UTC
+Last update was at Oct 20, 2026 at 06:19:51 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7732 out of 8295 functions done in 719 categories)
+## Stats (7737 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (678/719) [94%]
+#### Completely reversed categories (679/719) [94%]
 
 <details>
 <summary>See list of categories</summary>
@@ -551,6 +551,7 @@ Last update was at Oct 20, 2026 at 06:06:46 UTC
 - CTaskSimplePlayHandSignalAnim (2)<br />
 - CTaskComplexCarDrive (11)<br />
 - CTaskComplexCarDriveMission (5)<br />
+- CTaskComplexKillPedFromBoat (7)<br />
 - CTaskComplexTreatAccident (7)<br />
 - CTaskComplexGoToPointAndStandStillTimed (6)<br />
 - CTaskComplexPartnerShove (1)<br />
@@ -695,7 +696,7 @@ Last update was at Oct 20, 2026 at 06:06:46 UTC
 
 </details>
 
-#### Partially reversed categories (37/719) [5%]
+#### Partially reversed categories (36/719) [5%]
 
 <details>
 <summary>See list of categories</summary>
@@ -726,7 +727,6 @@ Last update was at Oct 20, 2026 at 06:06:46 UTC
 - CTaskComplexFollowLeaderInFormation (1/7) [14%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
 - CTaskComplexSunbathe (2/8) [25%]<br />
-- CTaskComplexKillPedFromBoat (2/7) [29%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - CAEScriptAudioEntity (8/19) [42%]<br />
 - CAERadioTrackManager (29/43) [67%]<br />

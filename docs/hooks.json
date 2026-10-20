@@ -31152,27 +31152,27 @@
   {
     "Category": "CTaskComplexKillPedFromBoat",
     "Name": "Clone",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexKillPedFromBoat",
     "Name": "GetTaskType",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexKillPedFromBoat",
     "Name": "CreateNextSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexKillPedFromBoat",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexKillPedFromBoat",
     "Name": "ControlSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexTreatAccident",
