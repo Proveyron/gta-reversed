@@ -10242,7 +10242,7 @@
     {
         "Category": "CPostEffects",
         "Name": "HeatHazeFX",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPostEffects",
@@ -10302,7 +10302,7 @@
     {
         "Category": "CPostEffects",
         "Name": "SpeedFX",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPostEffects",
@@ -10317,7 +10317,7 @@
     {
         "Category": "CPostEffects",
         "Name": "Radiosity",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPostEffects",
@@ -10427,7 +10427,7 @@
     {
         "Category": "CFont",
         "Name": "PrintChar",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CFont",
@@ -10532,7 +10532,7 @@
     {
         "Category": "CFont",
         "Name": "RenderFontBuffer",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CFont",
@@ -10547,7 +10547,7 @@
     {
         "Category": "CFont",
         "Name": "ProcessCurrentString",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CFont",
@@ -10587,7 +10587,7 @@
     {
         "Category": "CFont",
         "Name": "FindSubFontCharacter",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CFont",

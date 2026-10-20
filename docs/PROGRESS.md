@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 22:56:16 UTC
+Last update was at Oct 20, 2026 at 00:33:18 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7659 out of 8295 functions done in 719 categories)
+## Stats (7666 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (660/719) [92%]
+#### Completely reversed categories (662/719) [92%]
 
 <details>
 <summary>See list of categories</summary>
@@ -119,8 +119,10 @@ Last update was at Oct 19, 2026 at 22:56:16 UTC
 - COcclusion (5)<br />
 - COccluder (3)<br />
 - CActiveOccluder (2)<br />
+- CPostEffects (38)<br />
 - CIniFile (1)<br />
 - CStencilShadowObject (3)<br />
+- CFont (36)<br />
 - CGameLogic (27)<br />
 - CStuckCarCheck (8)<br />
 - CUpsideDownCarCheck (5)<br />
@@ -677,7 +679,7 @@ Last update was at Oct 19, 2026 at 22:56:16 UTC
 
 </details>
 
-#### Partially reversed categories (54/719) [8%]
+#### Partially reversed categories (52/719) [7%]
 
 <details>
 <summary>See list of categories</summary>
@@ -691,9 +693,7 @@ Last update was at Oct 19, 2026 at 22:56:16 UTC
 - CCarCtrl (21/110) [19%]<br />
 - CGarage (4/18) [22%]<br />
 - CGarages (21/27) [78%]<br />
-- CPostEffects (35/38) [92%]<br />
 - CStencilShadows (9/13) [69%]<br />
-- CFont (32/36) [89%]<br />
 - CCamera (97/114) [85%]<br />
 - CPedGroups (2/11) [18%]<br />
 - CPlayerInfo (25/28) [89%]<br />

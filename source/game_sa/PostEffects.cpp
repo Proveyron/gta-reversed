@@ -13,6 +13,15 @@ auto& hpS = StaticRef<std::array<int32, 180>>(0xC3F868); // speed
 
 static inline auto& s_DayNightBalanceParamOld = StaticRef<float>(0xC3F860);
 
+struct tSpeedFXEntry {
+    float speed;
+    int32 numPasses;
+    int32 field_8;
+    int32 field_C;
+};
+
+static inline auto& SpeedFXTable = StaticRef<std::array<tSpeedFXEntry, 7>>(0x8D5190);
+
 static constexpr auto GRAIN_TEXTURE_DIM = 256u; // 256x256
 
 void CPostEffects::InjectHooks() {
@@ -39,7 +48,7 @@ void CPostEffects::InjectHooks() {
     RH_ScopedInstall(ScriptResetForEffects, 0x7010F0);
     RH_ScopedInstall(UnderWaterRipple, 0x7039C0);
     RH_ScopedInstall(HeatHazeFXInit, 0x701450);
-    RH_ScopedInstall(HeatHazeFX, 0x701780, { .Reversed = false });
+    RH_ScopedInstall(HeatHazeFX, 0x701780);
     RH_ScopedInstall(IsVisionFXActive, 0x7034F0);
     RH_ScopedInstall(NightVision, 0x7011C0);
     RH_ScopedInstall(NightVisionSetLights, 0x7012E0);
@@ -51,10 +60,10 @@ void CPostEffects::InjectHooks() {
     RH_ScopedInstall(Fog, 0x704150);
     RH_ScopedInstall(CCTV, 0x702F40);
     RH_ScopedInstall(Grain, 0x7037C0);
-    RH_ScopedInstall(SpeedFX, 0x7030A0, { .Reversed = false });
+    RH_ScopedInstall(SpeedFX, 0x7030A0);
     RH_ScopedInstall(DarknessFilter, 0x702F00);
     RH_ScopedInstall(ColourFilter, 0x703650);
-    RH_ScopedInstall(Radiosity, 0x702080, { .Reversed = false });
+    RH_ScopedInstall(Radiosity, 0x702080);
     RH_ScopedInstall(SetSpeedFXManualSpeedCurrentFrame, 0x700BE0);
     RH_ScopedInstall(Render, 0x7046E0);
 }
@@ -540,7 +549,223 @@ void CPostEffects::HeatHazeFXInit() {
 
 // 0x701780
 void CPostEffects::HeatHazeFX(float fIntensity, bool bAlphaMaskMode) {
-    plugin::Call<0x701780, float, bool>(fIntensity, bAlphaMaskMode);
+    RwRaster* const frameRaster = RwCameraGetRaster(Scene.m_pRwCamera);
+    const bool isRasterDepthNot16 = (RwRasterGetDepth(frameRaster) != 16);
+
+    if (bAlphaMaskMode) {
+        RwRGBA clearColor{ 0, 0, 0, 0 };
+        RwCameraClear(Scene.m_pRwCamera, &clearColor, rwCAMERACLEARIMAGE);
+        ImmediateModeRenderStatesStore();
+        ImmediateModeRenderStatesSet();
+        RwRenderStateSet(rwRENDERSTATESRCBLEND,  RWRSTATE(rwBLENDSRCALPHA));
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, RWRSTATE(rwBLENDONE));
+        if (isRasterDepthNot16) {
+            RwRenderStateSet(rwRENDERSTATESTENCILENABLE,       RWRSTATE(TRUE));
+            RwRenderStateSet(rwRENDERSTATESTENCILFAIL,         RWRSTATE(rwSTENCILOPERATIONKEEP));
+            RwRenderStateSet(rwRENDERSTATESTENCILZFAIL,        RWRSTATE(rwSTENCILOPERATIONKEEP));
+            RwRenderStateSet(rwRENDERSTATESTENCILPASS,         RWRSTATE(rwSTENCILOPERATIONREPLACE));
+            RwRenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF,  RWRSTATE(0));
+            RwRenderStateSet(rwRENDERSTATESTENCILFUNCTION,     RWRSTATE(rwSTENCILFUNCTIONALWAYS));
+        }
+        DrawQuad(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0, 255, nullptr);
+        if (isRasterDepthNot16) {
+            RwRenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF, RWRSTATE(1));
+        }
+        g_fx.Render(TheCamera.m_pRwCamera, true);
+        ImmediateModeRenderStatesReStore();
+    } else {
+        m_bHeatHazeMaskMode = false;
+    }
+
+    fIntensity = std::clamp(fIntensity, 0.0f, 1.0f);
+    HeatHazeFXInit();
+
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, RWRSTATE(rwTEXTUREADDRESSCLAMP));
+    RwCameraEndUpdate(Scene.m_pRwCamera);
+    RwRasterPushContext(pRasterFrontBuffer);
+    RwRasterRenderFast(RwCameraGetRaster(Scene.m_pRwCamera), 0, 0);
+    RwRasterPopContext();
+    RsCameraBeginUpdate(Scene.m_pRwCamera);
+
+    uiTempBufferVerticesStored = 0;
+    uiTempBufferIndicesStored = 0;
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE,         RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(TRUE));
+
+    const auto intensity = static_cast<int32>(static_cast<float>(m_HeatHazeFXIntensity) * fIntensity);
+
+    if (isRasterDepthNot16) {
+        RwRenderStateSet(rwRENDERSTATESTENCILPASS,        RWRSTATE(rwSTENCILOPERATIONKEEP));
+        RwRenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF, RWRSTATE(1));
+        RwRenderStateSet(rwRENDERSTATESTENCILFUNCTION,    RWRSTATE(rwSTENCILFUNCTIONEQUAL));
+    }
+
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE,     RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,    RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER,   RWRSTATE(pRasterFrontBuffer));
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER,   RWRSTATE(rwFILTERLINEAR));
+    RwRenderStateSet(rwRENDERSTATESRCBLEND,        RWRSTATE(rwBLENDSRCALPHA));
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND,       RWRSTATE(rwBLENDINVSRCALPHA));
+
+    const auto rasterWidth = RwRasterGetWidth(pRasterFrontBuffer);
+    const auto rasterHeight = RwRasterGetHeight(pRasterFrontBuffer);
+    const float recipNearClip = 1.0f / RwCameraGetNearClipPlane(Scene.m_pRwCamera);
+    const float nearScreenZ = RwIm2DGetNearScreenZ();
+
+    if (m_bHeatHazeMaskMode) {
+        const uint32 color = (static_cast<uint32>(intensity) << 24) | 0x00FF0000;
+
+        auto v = &aRadiosityVertexBuffer[0];
+        v[0].x = 0.0f;
+        v[0].y = 0.0f;
+        v[0].z = nearScreenZ;
+        v[0].rhw = recipNearClip;
+        v[0].emissiveColor = color;
+
+        v[1].x = static_cast<float>(rasterWidth);
+        v[1].y = 0.0f;
+        v[1].z = nearScreenZ;
+        v[1].rhw = recipNearClip;
+        v[1].emissiveColor = color;
+
+        v[2].x = 0.0f;
+        v[2].y = static_cast<float>(rasterHeight);
+        v[2].z = nearScreenZ;
+        v[2].rhw = recipNearClip;
+        v[2].emissiveColor = color;
+
+        v[3].x = static_cast<float>(rasterWidth);
+        v[3].y = static_cast<float>(rasterHeight);
+        v[3].z = nearScreenZ;
+        v[3].rhw = recipNearClip;
+        v[3].emissiveColor = color;
+
+        aTempBufferIndices[0] = 0;
+        aTempBufferIndices[1] = 2;
+        aTempBufferIndices[2] = 1;
+        aTempBufferIndices[3] = 1;
+        aTempBufferIndices[4] = 2;
+        aTempBufferIndices[5] = 3;
+
+        uiTempBufferVerticesStored = 4;
+        uiTempBufferIndicesStored = 6;
+    } else {
+        const auto scanSizeX = m_HeatHazeFXScanSizeX;
+        const auto renderSizeX = m_HeatHazeFXRenderSizeX;
+        const auto scanSizeY = m_HeatHazeFXScanSizeY;
+        const auto renderSizeY = m_HeatHazeFXRenderSizeY;
+        const auto diffX = (renderSizeX - scanSizeX) / 2;
+        const auto diffY = (renderSizeY - scanSizeY) / 2;
+        const uint32 color = (static_cast<uint32>(intensity) << 24) | 0x00FFFFFF;
+
+        int32 numVertices = 0;
+        int32 numIndices = 0;
+
+        for (int32 i = 0; i < 180; ++i) {
+            int32 srcX = hpX[i];
+            int32 srcY = hpY[i];
+            int32 dstX = srcX - diffX;
+            int32 dstY = srcY - diffY;
+
+            if (m_HeatHazeFXRandomShift > 0) {
+                dstX += CGeneral::GetRandomNumberInRange(-m_HeatHazeFXRandomShift, m_HeatHazeFXRandomShift);
+                dstY += CGeneral::GetRandomNumberInRange(-m_HeatHazeFXRandomShift, m_HeatHazeFXRandomShift);
+            }
+
+            if (dstX < 0) {
+                srcX += diffX;
+                dstX = 0;
+            }
+            if (dstX > rasterWidth - renderSizeX) {
+                dstX = rasterWidth - renderSizeX;
+                srcX -= diffX;
+            }
+            if (dstY < 0) {
+                srcY += diffY;
+                dstY = 0;
+            }
+            if (dstY > rasterHeight - renderSizeY) {
+                dstY = rasterHeight - renderSizeY;
+                srcY -= diffY;
+            }
+
+            auto v = &aRadiosityVertexBuffer[numVertices];
+
+            // 0: Top-left
+            v[0].x = static_cast<float>(dstX);
+            v[0].y = static_cast<float>(dstY);
+            v[0].z = nearScreenZ;
+            v[0].rhw = recipNearClip;
+            v[0].emissiveColor = color;
+            v[0].u = static_cast<float>(srcX) / static_cast<float>(rasterWidth);
+            v[0].v = static_cast<float>(srcY) / static_cast<float>(rasterHeight);
+
+            // 1: Top-right
+            v[1].x = static_cast<float>(dstX + renderSizeX);
+            v[1].y = static_cast<float>(dstY);
+            v[1].z = nearScreenZ;
+            v[1].rhw = recipNearClip;
+            v[1].emissiveColor = color;
+            v[1].u = static_cast<float>(srcX + scanSizeX) / static_cast<float>(rasterWidth);
+            v[1].v = static_cast<float>(srcY) / static_cast<float>(rasterHeight);
+
+            // 2: Bottom-left
+            v[2].x = static_cast<float>(dstX);
+            v[2].y = static_cast<float>(dstY + renderSizeY);
+            v[2].z = nearScreenZ;
+            v[2].rhw = recipNearClip;
+            v[2].emissiveColor = color;
+            v[2].u = static_cast<float>(srcX) / static_cast<float>(rasterWidth);
+            v[2].v = static_cast<float>(srcY + scanSizeY) / static_cast<float>(rasterHeight);
+
+            // 3: Bottom-right
+            v[3].x = static_cast<float>(dstX + renderSizeX);
+            v[3].y = static_cast<float>(dstY + renderSizeY);
+            v[3].z = nearScreenZ;
+            v[3].rhw = recipNearClip;
+            v[3].emissiveColor = color;
+            v[3].u = static_cast<float>(srcX + scanSizeX) / static_cast<float>(rasterWidth);
+            v[3].v = static_cast<float>(srcY + scanSizeY) / static_cast<float>(rasterHeight);
+
+            aTempBufferIndices[numIndices + 0] = static_cast<RxVertexIndex>(numVertices + 0);
+            aTempBufferIndices[numIndices + 1] = static_cast<RxVertexIndex>(numVertices + 2);
+            aTempBufferIndices[numIndices + 2] = static_cast<RxVertexIndex>(numVertices + 1);
+            aTempBufferIndices[numIndices + 3] = static_cast<RxVertexIndex>(numVertices + 1);
+            aTempBufferIndices[numIndices + 4] = static_cast<RxVertexIndex>(numVertices + 2);
+            aTempBufferIndices[numIndices + 5] = static_cast<RxVertexIndex>(numVertices + 3);
+
+            numIndices += 6;
+            numVertices += 4;
+
+            hpY[i] -= static_cast<int32>(CTimer::GetTimeStep() * 0.5f * static_cast<float>(hpS[i]));
+            if (hpY[i] < 0) {
+                hpX[i] = CGeneral::GetRandomNumberInRange(0, rasterWidth - scanSizeX);
+                hpY[i] = rasterHeight - scanSizeY;
+                hpS[i] = CGeneral::GetRandomNumberInRange(m_HeatHazeFXSpeedMin, m_HeatHazeFXSpeedMax);
+            }
+        }
+
+        uiTempBufferVerticesStored = static_cast<uint16>(numVertices);
+        uiTempBufferIndicesStored = static_cast<uint16>(numIndices);
+    }
+
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RWRSTATE(pRasterFrontBuffer));
+    if (uiTempBufferVerticesStored > 0) {
+        RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, aRadiosityVertexBuffer, uiTempBufferVerticesStored, aTempBufferIndices, uiTempBufferIndicesStored);
+    }
+
+    uiTempBufferVerticesStored = 0;
+    uiTempBufferIndicesStored = 0;
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE,         RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE,       RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,      RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER,     RWRSTATE(nullptr));
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATESRCBLEND,          RWRSTATE(rwBLENDSRCALPHA));
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND,         RWRSTATE(rwBLENDINVSRCALPHA));
+    if (isRasterDepthNot16) {
+        RwRenderStateSet(rwRENDERSTATESTENCILENABLE, RWRSTATE(FALSE));
+    }
 }
 
 // 0x7034F0
@@ -841,7 +1066,104 @@ void CPostEffects::Grain(int32 strengthMask, bool update) {
 
 // 0x7030A0
 void CPostEffects::SpeedFX(float speed) {
-    plugin::Call<0x7030A0, float>(speed);
+    const auto camMode = TheCamera.GetActiveCam().m_nMode;
+    const bool isCamMode1 = (camMode == MODE_TOPDOWN);
+    const bool isCamMode2 = (camMode == MODE_GTACLASSIC);
+
+    int32 numPasses = 0;
+    int32 jitterBase = 0;
+    int32 offsetMult = 0;
+
+    for (int32 i = 6; i >= 0; --i) {
+        if (speed >= SpeedFXTable[i].speed) {
+            numPasses  = SpeedFXTable[i].numPasses;
+            jitterBase = SpeedFXTable[i].field_8;
+            offsetMult = SpeedFXTable[i].field_C;
+            break;
+        }
+    }
+
+    if (isCamMode1 || isCamMode2) {
+        jitterBase /= 2;
+        offsetMult = 0;
+    }
+
+    if (numPasses <= 0) {
+        return;
+    }
+
+    ImmediateModeRenderStatesStore();
+    ImmediateModeRenderStatesSet();
+
+    float randX = 0.0f;
+    float randY = 0.0f;
+
+    if (offsetMult > 0) {
+        const float jitterScaleU = static_cast<float>(jitterBase) * 0.004f * ms_imf.fFrontBufferU2;
+        const float jitterScaleV = static_cast<float>(jitterBase) * 0.004f * ms_imf.fFrontBufferV2;
+
+        randX = (static_cast<float>(rand()) * (1.0f / 32767.0f)) * jitterScaleU;
+        randY = (static_cast<float>(rand()) * (1.0f / 32767.0f)) * jitterScaleV;
+    }
+
+    const float stepU = static_cast<float>(offsetMult) * ms_imf.fFrontBufferU2 * 0.0025f;
+    const float stepV = static_cast<float>(offsetMult) * ms_imf.fFrontBufferV2 * 0.0025f;
+
+    float uOffset0 = stepU;
+    float vOffset0 = stepV;
+
+    float uOffset1 = -stepU;
+    float vOffset1 = stepV;
+
+    float uOffset2 = stepU;
+    float vOffset2 = -stepV;
+
+    float uOffset3 = -stepU;
+    float vOffset3 = -stepV;
+
+    for (int32 pass = numPasses; pass > 0; --pass) {
+        if (isCamMode1 || isCamMode2) {
+            randX = 0.0f;
+            randY = 0.0f;
+            uOffset0 = 0.0f;
+            vOffset0 = 0.0f;
+            uOffset1 = 0.0f;
+            vOffset1 = 0.0f;
+            uOffset2 = 0.0f;
+            vOffset2 = 0.0f;
+            uOffset3 = 0.0f;
+            vOffset3 = 0.0f;
+        }
+
+        ms_imf.quad[0].u = ms_imf.fFrontBufferU1 + uOffset0 + randX;
+        ms_imf.quad[0].v = ms_imf.fFrontBufferV1 + vOffset0 + randY;
+
+        ms_imf.quad[1].u = ms_imf.fFrontBufferU2 + uOffset1 - randX;
+        ms_imf.quad[1].v = ms_imf.fFrontBufferV1 + vOffset1 + randY;
+
+        ms_imf.quad[2].u = ms_imf.fFrontBufferU1 + uOffset2 + randX;
+        ms_imf.quad[2].v = ms_imf.fFrontBufferV2 + vOffset2 - randY;
+
+        ms_imf.quad[3].u = ms_imf.fFrontBufferU2 + uOffset3 - randX;
+        ms_imf.quad[3].v = ms_imf.fFrontBufferV2 + vOffset3 - randY;
+
+        DrawQuad(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 255, 255, 255, static_cast<uint8>(m_SpeedFXAlpha), pRasterFrontBuffer);
+
+        uOffset0 += stepU;
+        vOffset0 += stepV;
+
+        uOffset1 -= stepU;
+        vOffset1 += stepV;
+
+        uOffset3 -= stepU;
+        vOffset3 -= stepV;
+
+        uOffset2 += stepU;
+        vOffset2 -= stepV;
+    }
+
+    DrawQuadSetDefaultUVs();
+    ImmediateModeRenderStatesReStore();
 }
 
 // 0x702F00
@@ -885,7 +1207,156 @@ void CPostEffects::ColourFilter(RwRGBA pass1, RwRGBA pass2) {
 
 // 0x702080
 void CPostEffects::Radiosity(int32 intensityLimit, int32 filterPasses, int32 renderPasses, int32 intensity) {
-    plugin::Call<0x702080>();
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER,     RWRSTATE(rwFILTERNEAREST));
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE,         RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE,       RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,      RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER,     RWRSTATE(pRasterFrontBuffer));
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATESRCBLEND,          RWRSTATE(rwBLENDSRCALPHA));
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND,         RWRSTATE(rwBLENDINVSRCALPHA));
+
+    const float recipNearClip = 1.0f / RwCameraGetNearClipPlane(Scene.m_pRwCamera);
+
+    aRadiosityVertexBuffer[0].x = 0.0f;
+    aRadiosityVertexBuffer[0].y = 0.0f;
+    aRadiosityVertexBuffer[0].z = 0.0f;
+    aRadiosityVertexBuffer[0].rhw = recipNearClip;
+    aRadiosityVertexBuffer[0].u = 0.0f;
+    aRadiosityVertexBuffer[0].v = 0.0f;
+
+    if (!m_bRadiosityStripCopyMode) {
+        aRadiosityVertexBuffer[1].x = m_RadiosityPixelsX;
+        aRadiosityVertexBuffer[1].y = m_RadiosityPixelsY;
+    } else {
+        aRadiosityVertexBuffer[1].x = SCREEN_WIDTH;
+        aRadiosityVertexBuffer[1].y = SCREEN_HEIGHT;
+    }
+    aRadiosityVertexBuffer[1].z = 0.0f;
+    aRadiosityVertexBuffer[1].rhw = recipNearClip;
+    aRadiosityVertexBuffer[1].u = 1.0f;
+    aRadiosityVertexBuffer[1].v = 1.0f;
+
+    uiTempBufferVerticesStored = 0;
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, RWRSTATE(TRUE));
+
+    const auto rasterWidth = RwRasterGetWidth(pRasterFrontBuffer);
+    const auto rasterHeight = RwRasterGetHeight(pRasterFrontBuffer);
+
+    int32 currentPixelsX = static_cast<int32>(m_RadiosityPixelsX);
+    int32 currentPixelsY = static_cast<int32>(m_RadiosityPixelsY);
+
+    if (intensity > 0) {
+        RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, RWRSTATE(rwFILTERLINEAR));
+
+        int32 numFilterVerts = 0;
+        for (int32 p = 0; p < filterPasses; ++p) {
+            const int32 nextPixelsX = currentPixelsX / 2;
+            const int32 nextPixelsY = currentPixelsY / 2;
+
+            auto v = &aRadiosityVertexBuffer[numFilterVerts];
+
+            v[0].x = 0.0f;
+            v[0].y = 0.0f;
+            v[0].z = 0.0f;
+            v[0].rhw = recipNearClip;
+            v[0].emissiveColor = 0xFFFFFFFF;
+            v[0].u = static_cast<float>(m_RadiosityFilterUCorrection) / static_cast<float>(rasterWidth);
+            v[0].v = static_cast<float>(m_RadiosityFilterVCorrection) / static_cast<float>(rasterHeight);
+
+            v[1].x = static_cast<float>(nextPixelsX + 1);
+            v[1].y = static_cast<float>(nextPixelsY + 1);
+            v[1].z = 0.0f;
+            v[1].rhw = recipNearClip;
+            v[1].emissiveColor = 0xFFFFFFFF;
+            v[1].u = static_cast<float>(currentPixelsX) / static_cast<float>(rasterWidth);
+            v[1].v = static_cast<float>(currentPixelsY) / static_cast<float>(rasterHeight);
+
+            currentPixelsX = nextPixelsX;
+            currentPixelsY = nextPixelsY;
+            numFilterVerts += 2;
+        }
+        uiTempBufferVerticesStored = static_cast<uint16>(numFilterVerts);
+    }
+
+    RwRenderStateSet(rwRENDERSTATESRCBLEND,  RWRSTATE(rwBLENDSRCALPHA));
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, RWRSTATE(rwBLENDINVSRCALPHA));
+
+    const auto intensityLimitColor = 0x80000000 | ((intensityLimit & 0xFF) << 16) | ((intensityLimit & 0xFF) << 8) | (intensityLimit & 0xFF);
+
+    auto vTrans = &aRadiosityVertexBuffer[uiTempBufferVerticesStored];
+    vTrans[0].x = 0.0f;
+    vTrans[0].y = 0.0f;
+    vTrans[0].z = 0.0f;
+    vTrans[0].rhw = recipNearClip;
+    vTrans[0].emissiveColor = intensityLimitColor;
+
+    vTrans[1].x = static_cast<float>(currentPixelsX + 1);
+    vTrans[1].y = static_cast<float>(currentPixelsY + 1);
+    vTrans[1].z = 0.0f;
+    vTrans[1].rhw = recipNearClip;
+    vTrans[1].emissiveColor = intensityLimitColor;
+
+    uiTempBufferVerticesStored += 2;
+
+    if (renderPasses > 0) {
+        if (uiTempBufferVerticesStored > 2) {
+            RwIm2DRenderPrimitive(rwPRIMTYPETRISTRIP, reinterpret_cast<RwIm2DVertex*>(aRadiosityVertexBuffer), uiTempBufferVerticesStored);
+        }
+
+        uiTempBufferVerticesStored = 0;
+
+        if (m_bRadiosityLinearFilter) {
+            RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, RWRSTATE(rwFILTERLINEAR));
+        } else {
+            RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, RWRSTATE(rwFILTERMIPLINEAR));
+        }
+
+        const uint32 renderPassColor = m_bRadiosityDebug ? 0xFFFFFFFF : (static_cast<uint32>(intensity) << 24);
+
+        const float quadW = m_bRadiosityStripCopyMode ? SCREEN_WIDTH : m_RadiosityPixelsX;
+        const float quadH = m_bRadiosityStripCopyMode ? SCREEN_HEIGHT : m_RadiosityPixelsY;
+
+        const float uMax = static_cast<float>(currentPixelsX) / static_cast<float>(rasterWidth);
+        const float vMax = static_cast<float>(currentPixelsY) / static_cast<float>(rasterHeight);
+
+        int32 numRenderVerts = 0;
+        for (int32 p = 0; p < renderPasses; ++p) {
+            auto v = &aRadiosityVertexBuffer[numRenderVerts];
+
+            v[0].x = 0.0f;
+            v[0].y = 0.0f;
+            v[0].z = 0.0f;
+            v[0].rhw = recipNearClip;
+            v[0].emissiveColor = renderPassColor;
+            v[0].u = 0.0f;
+            v[0].v = 0.0f;
+
+            v[1].x = quadW;
+            v[1].y = quadH;
+            v[1].z = 0.0f;
+            v[1].rhw = recipNearClip;
+            v[1].emissiveColor = renderPassColor;
+            v[1].u = uMax;
+            v[1].v = vMax;
+
+            numRenderVerts += 2;
+        }
+        uiTempBufferVerticesStored = static_cast<uint16>(numRenderVerts);
+
+        if (uiTempBufferVerticesStored > 2) {
+            RwIm2DRenderPrimitive(rwPRIMTYPETRISTRIP, reinterpret_cast<RwIm2DVertex*>(aRadiosityVertexBuffer), uiTempBufferVerticesStored);
+        }
+    }
+
+    uiTempBufferVerticesStored = 0;
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE,         RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE,       RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE,      RWRSTATE(TRUE));
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER,     RWRSTATE(nullptr));
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, RWRSTATE(FALSE));
+    RwRenderStateSet(rwRENDERSTATESRCBLEND,          RWRSTATE(rwBLENDSRCALPHA));
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND,         RWRSTATE(rwBLENDINVSRCALPHA));
 }
 
 // 0x700BE0

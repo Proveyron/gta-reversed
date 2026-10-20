@@ -161,6 +161,7 @@ public:
     static void PrintStringFromBottom(float x, float y, const GxtChar* text);
     static float GetCharacterSize(uint8 ch);
     static uint8 FindSubFontCharacter(uint8 letterId, uint8 fontStyle);
+    static void PrintSubString(float x, float y, const GxtChar* start, const GxtChar* end, float wrap);
 };
 
 static void ReadFontsDat();

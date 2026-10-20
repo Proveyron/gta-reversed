@@ -21,7 +21,7 @@ void CFont::InjectHooks() {
 
     RH_ScopedInstall(Initialise, 0x5BA690);
     RH_ScopedInstall(Shutdown, 0x7189B0);
-    RH_ScopedInstall(PrintChar, 0x718A10, { .Reversed = false });
+    RH_ScopedInstall(PrintChar, 0x718A10);
     RH_ScopedInstall(ParseToken, 0x718F00);
 
     // styling functions
@@ -45,10 +45,10 @@ void CFont::InjectHooks() {
     RH_ScopedInstall(SetOrientation, 0x719610);
 
     RH_ScopedInstall(InitPerFrame, 0x719800);
-    RH_ScopedInstall(RenderFontBuffer, 0x719840, { .Reversed = false });
+    RH_ScopedInstall(RenderFontBuffer, 0x719840);
     RH_ScopedInstall(GetStringWidth, 0x71A0E0);
     RH_ScopedInstall(DrawFonts, 0x71A210);
-    RH_ScopedInstall(ProcessCurrentString, 0x71A220, { .Reversed = false });
+    RH_ScopedInstall(ProcessCurrentString, 0x71A220);
     RH_ScopedInstall(GetNumberLines, 0x71A5E0);
     RH_ScopedInstall(ProcessStringToDisplay, 0x71A600);
     RH_ScopedInstall(GetTextRect, 0x71A620);
@@ -56,8 +56,8 @@ void CFont::InjectHooks() {
     RH_ScopedInstall(PrintStringFromBottom, 0x71A820);
     RH_ScopedInstall(GetCharacterSize, 0x719750);
     RH_ScopedInstall(LoadFontValues, 0x7187C0);
-    // Install("", "GetScriptLetterSize", 0x719670, &GetScriptLetterSize);
-    RH_ScopedInstall(FindSubFontCharacter, 0x7192C0, { .Reversed = false });
+    RH_ScopedGlobalInstall(GetScriptLetterSize, 0x719670);
+    RH_ScopedInstall(FindSubFontCharacter, 0x7192C0);
     RH_ScopedGlobalInstall(GetLetterIdPropValue, 0x718770);
 }
 
@@ -180,122 +180,117 @@ void CFont::Shutdown() {
 // this adds a single character into rendering buffer
 // 0x718A10
 void CFont::PrintChar(float x, float y, char character) {
-    return plugin::Call<0x718A10, float, float, char>(x, y, character);
-
-    // todo: check the fucking uv values
-
-    // out of screen
-    if (x < 0.0f || x > SCREEN_WIDTH || y < 0.0f || y > SCREEN_HEIGHT)
-        return;
-
-    if (PS2Symbol) {
-        // extra symbol to be drawn (e.g. PS2 buttons)
-
-        CRect rt = {
-            x,
-            2.0f * RenderState.m_fHeight + y,
-            17.0f * RenderState.m_fHeight + x,
-            19.0f * RenderState.m_fHeight + y
-        };
-
-        ButtonSprite[PS2Symbol].Draw(rt, { 255, 255, 255, RenderState.m_color.a });
-
+    if (x < 0.0f || x > SCREEN_WIDTH || y < 0.0f || y > SCREEN_HEIGHT) {
         return;
     }
 
-    if (!character || character == '?') {
-        float propValue = GetLetterIdPropValue(character) / 32.0f;
-        bool zeroed = false;
+    if (PS2Symbol) {
+        CRect rt{
+            x,
+            y + 2.0f * RenderState.m_fHeight,
+            x + 17.0f * RenderState.m_fHeight,
+            y + 19.0f * RenderState.m_fHeight
+        };
+        ButtonSprite[PS2Symbol].Draw(rt, CRGBA(255, 255, 255, RenderState.m_color.a));
+        return;
+    }
 
-        if (RenderState.m_nFontStyle == 1 && character == 208) {
-            character = 0;
-            zeroed = true;
-        }
+    bool zeroed = false;
+    auto ch = static_cast<uint8>(character);
+    if (ch == 0 || ch == '?') {
+        ch = 0;
+        zeroed = true;
+    }
 
-        //auto v1 = (character >> 4);
-        //auto u1 = (character & 0xf) / 16.0f;
+    float propValue = GetLetterIdPropValue(ch) / 32.0f;
+    if (RenderState.m_nFontStyle == 1 && ch == 208) {
+        ch = 0;
+    }
 
-        auto propval = propValue / 32.0f;
+    float u = static_cast<float>(ch & 0xF) / 16.0f;
 
-        if (RenderState.m_wFontTexture && RenderState.m_wFontTexture != 1) {
-            if (!zeroed) {
-                CRect rt = {
-                    y,
-                    x,
-                    32.0f * propValue * RenderState.m_fWidth + x,
-                    16.0f * RenderState.m_fHeight + y,
-                };
-
-                float u1 = (character & 0xF) / 16.0f;
-                float v1 = (character >> 4) / 16.0f;
-                float u2 = propval / 16.0f + u1;
-                float v2 = v1;
-                float u3 = u1;
-                float v3 = v1 + 0.0625f;
-                float u4 = u2 - 0.0001f;
-                float v4 = v3 - 0.0001f;
-
-                CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
-            }
-
+    if (RenderState.m_wFontTexture != 0 && RenderState.m_wFontTexture != 1) {
+        float v = static_cast<float>(ch >> 4) / 16.0f;
+        if (zeroed) {
             return;
         }
 
-        if (!zeroed) {
-            CRect rt;
+        CRect rt{
+            x,
+            y,
+            x + 32.0f * RenderState.m_fWidth * propValue,
+            y + 16.0f * RenderState.m_fHeight
+        };
 
-            rt.left = x;
+        float u1 = u;
+        float v1 = v;
+        float u2 = u + propValue / 16.0f;
+        float v2 = v;
+        float u3 = u;
+        float v3 = v + 0.0625f;
+        float u4 = u2 - 0.0001f;
+        float v4 = v3 - 0.0001f;
 
-            if (RenderState.m_fSlant == 0.0f) {
-                rt.bottom = y;
-                rt.right = 32.0f * RenderState.m_fWidth + x;
+        CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
+        return;
+    }
 
-                if (character < 0xC0) {
-                    rt.top = 20.0f * RenderState.m_fHeight + y;
+    float v = static_cast<float>(ch >> 4) / 12.8f;
+    if (zeroed) {
+        return;
+    }
 
-                    float u1 = (character & 0xF) / 16.0f;
-                    float v1 = (character >> 4) / 12.8f + 0.0021f;
-                    float u2 = u1 + 0.0615f;
-                    float v2 = v1;
-                    float u3 = u1;
-                    float v3 = v2 - 0.0021f;
-                    float u4 = u2;
-                    float v4 = v2 - 0.0021f;
+    if (RenderState.m_fSlant == 0.0f) {
+        float u1 = u;
+        float v1 = v + 0.0021f;
+        float u2 = u + 0.0615f;
+        float v2 = v + 0.0021f;
+        float u3 = u;
+        float u4 = u + 0.0615f;
 
-                    CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
-                }
-                else {
-                    rt.top = 16.0f * RenderState.m_fHeight + y;
+        if (ch >= 0xC0) {
+            CRect rt{
+                x,
+                y,
+                x + 32.0f * RenderState.m_fWidth,
+                y + 16.0f * RenderState.m_fHeight
+            };
 
-                    float u1 = (character & 0xF) / 16.0f;
-                    float v1 = (character >> 4) / 12.8f + 0.0021f;
-                    float u2 = u1 + 0.0615f;
-                    float v2 = v1;
-                    float u3 = u1;
-                    float v3 = v2 - 0.016f;
-                    float u4 = u2;
-                    float v4 = v2 - 0.015f;
+            float v3 = v + 0.078125f - 0.016f;
+            float v4 = v + 0.078125f - 0.015f;
 
-                    CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
-                }
-            }
-            else {
-                rt.bottom = y + 0.015f;
-                rt.right = 32.0f * RenderState.m_fWidth + x;
-                rt.top = 20.0f * RenderState.m_fHeight + y + 0.015f;
+            CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
+        } else {
+            CRect rt{
+                x,
+                y,
+                x + 32.0f * RenderState.m_fWidth,
+                y + 20.0f * RenderState.m_fHeight
+            };
 
-                float u1 = (character & 0xF) / 16.0f;
-                float v1 = (character >> 4) / 12.8f + 0.00055f;
-                float u2 = u1 + 0.0615f;
-                float v2 = (character >> 4) / 12.8f + 0.078125f;
-                float u3 = u1;
-                float v3 = v2 - 0.016f;
-                float u4 = u2;
-                float v4 = v2 - 0.015f;
+            float v3 = v + 0.078125f - 0.0021f;
+            float v4 = v + 0.078125f - 0.0021f;
 
-                CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
-            }
+            CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
         }
+    } else {
+        CRect rt{
+            x,
+            y + 0.015f,
+            x + 32.0f * RenderState.m_fWidth,
+            y + 20.0f * RenderState.m_fHeight + 0.015f
+        };
+
+        float u1 = u;
+        float v1 = v + 0.00055f;
+        float u2 = u + 0.0615f;
+        float v2 = v + 0.0121f;
+        float u3 = u;
+        float v3 = v + 0.078125f - 0.009f;
+        float u4 = u + 0.0615f;
+        float v4 = v + 0.078125f - 0.0021f + 0.01f;
+
+        CSprite2d::AddToBuffer(rt, RenderState.m_color, u1, v1, u2, v2, u3, v3, u4, v4);
     }
 }
 
@@ -583,7 +578,7 @@ void CFont::InitPerFrame() {
     m_nFontShadow = 0;
     m_bNewLine = false;
     PS2Symbol = EXSYMBOL_NONE;
-    RenderState.m_wFontTexture = 0; // todo: -1
+    RenderState.m_wFontTexture = static_cast<uint16>(-1);
     pEmptyChar = &FontRenderStateBuf[0]; // FontRenderStatePointer.pRenderState
 
     CSprite::InitSpriteBuffer();
@@ -592,7 +587,217 @@ void CFont::InitPerFrame() {
 // Draw text we have in buffer
 // 0x719840
 void CFont::RenderFontBuffer() {
-    plugin::Call<0x719840>();
+    if (pEmptyChar == &FontRenderStateBuf[0]) {
+        return;
+    }
+
+    Sprite[RenderState.m_wFontTexture].SetRenderState();
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, RWRSTATE(TRUE));
+
+    RenderState.Set(FontRenderStateBuf[0]);
+
+    CRGBA savedColor = RenderState.m_color;
+    float x = RenderState.m_vPosn.x;
+    float y = RenderState.m_vPosn.y;
+
+    auto* pBuf = reinterpret_cast<uint8*>(&FontRenderStateBuf[0]) + sizeof(CFontChar);
+
+    while (pBuf < reinterpret_cast<uint8*>(pEmptyChar)) {
+        if (*pBuf == '\0') {
+            pBuf++;
+            while (reinterpret_cast<uintptr_t>(pBuf) & 3) {
+                pBuf++;
+            }
+            if (pBuf >= reinterpret_cast<uint8*>(pEmptyChar)) {
+                break;
+            }
+            RenderState.Set(*reinterpret_cast<CFontChar*>(pBuf));
+            savedColor = RenderState.m_color;
+            x = RenderState.m_vPosn.x;
+            y = RenderState.m_vPosn.y;
+            pBuf += sizeof(CFontChar);
+        }
+
+        PS2Symbol = EXSYMBOL_NONE;
+        while (*pBuf == '~' && !PS2Symbol) {
+            CRGBA color = RenderState.m_color;
+            pBuf = reinterpret_cast<uint8*>(ParseToken(reinterpret_cast<char*>(pBuf), color, RenderState.m_bContainImages, nullptr));
+            if (!RenderState.m_bContainImages) {
+                RenderState.m_color = savedColor;
+            } else {
+                RenderState.m_color = color;
+            }
+        }
+
+        uint8 character = *pBuf;
+        uint8 fontChar = character - ' ';
+        if (RenderState.m_nFontStyle) {
+            fontChar = FindSubFontCharacter(fontChar, RenderState.m_nFontStyle);
+        } else {
+            if (fontChar == 145) { // 0x91
+                fontChar = '@';
+            } else if (fontChar > 155) { // 0x9B
+                fontChar = 0;
+            }
+        }
+
+        float drawY = y;
+        if (RenderState.m_fSlant != 0.0f) {
+            drawY = (RenderState.m_vSlanRefPoint.x - x) * RenderState.m_fSlant + RenderState.m_vSlanRefPoint.y;
+        }
+
+        if (!PS2Symbol || !RenderState.m_bContainImages) {
+            PrintChar(x, drawY, static_cast<char>(fontChar));
+        }
+
+        if (PS2Symbol) {
+            x += 17.0f * RenderState.m_fHeight + static_cast<float>(RenderState.m_nOutline);
+        } else {
+            uint8 charId = character - ' ';
+            if (charId == '?') {
+                charId = 0;
+            }
+            float charWidth = RenderState.m_bPropOn
+                ? static_cast<float>(gFontData[RenderState.m_wFontTexture].m_propValues[charId])
+                : static_cast<float>(gFontData[RenderState.m_wFontTexture].m_unpropValue);
+            x += (charWidth + static_cast<float>(RenderState.m_nOutline)) * RenderState.m_fWidth;
+        }
+
+        if (character == ' ') {
+            x += RenderState.m_fWrap;
+        }
+
+        if (*pBuf != '\0') {
+            if (PS2Symbol) {
+                Sprite[RenderState.m_wFontTexture].SetRenderState();
+                PS2Symbol = EXSYMBOL_NONE;
+            } else {
+                pBuf++;
+            }
+        } else if (PS2Symbol) {
+            Sprite[RenderState.m_wFontTexture].SetRenderState();
+            PS2Symbol = EXSYMBOL_NONE;
+        }
+    }
+
+    CSprite::FlushSpriteBuffer();
+    CSprite2d::RenderVertexBuffer();
+    pEmptyChar = &FontRenderStateBuf[0];
+}
+
+// 0x719B40
+void CFont::PrintSubString(float x, float y, const GxtChar* start, const GxtChar* end, float wrap) {
+    if (RenderState.m_wFontTexture != m_FontTextureId) {
+        RenderFontBuffer();
+        RenderState.m_wFontTexture = m_FontTextureId;
+    }
+
+    if (m_nFontShadow > 0) {
+        CRGBA savedColor = m_Color;
+        uint8 savedShadow = m_nFontShadow;
+        auto shadowOffset = static_cast<float>(savedShadow);
+
+        m_Color = m_FontDropColor;
+        m_bFontIsBlip = true;
+        m_nFontShadow = 0;
+
+        float dx = shadowOffset * (SCREEN_WIDTH / 640.0f);
+        float dy = shadowOffset * (SCREEN_HEIGHT / 448.0f);
+
+        if (m_fSlant != 0.0f) {
+            m_fSlantRefPoint.x += dx;
+            m_fSlantRefPoint.y += dy;
+        }
+
+        PrintSubString(x + dx, y + dy, start, end, wrap);
+
+        m_Color = savedColor;
+        m_nFontShadow = savedShadow;
+        m_bFontIsBlip = false;
+    } else if (m_nFontOutlineSize > 0) {
+        CRGBA savedColor = m_Color;
+        uint8 savedOutline = m_nFontOutlineSize;
+        auto outlineOffset = static_cast<float>(savedOutline);
+
+        m_Color = m_FontDropColor;
+        m_bFontIsBlip = true;
+        m_nFontOutlineSize = 0;
+
+        float dx = outlineOffset * (SCREEN_WIDTH / 640.0f);
+        float dy = outlineOffset * (SCREEN_HEIGHT / 448.0f);
+
+        if (m_fSlant != 0.0f) {
+            m_fSlantRefPoint.x += dx;
+            m_fSlantRefPoint.y += dy;
+        }
+
+        PrintSubString(x + dx, y - dy, start, end, wrap);
+        PrintSubString(x - dx, y - dy, start, end, wrap);
+        PrintSubString(x + dx, y + dy, start, end, wrap);
+        PrintSubString(x - dx, y + dy, start, end, wrap);
+        PrintSubString(x + dx, y,      start, end, wrap);
+        PrintSubString(x - dx, y,      start, end, wrap);
+        PrintSubString(x,      y + dy, start, end, wrap);
+        PrintSubString(x,      y - dy, start, end, wrap);
+
+        m_Color = savedColor;
+        m_nFontOutlineSize = savedOutline;
+        m_bFontIsBlip = false;
+    }
+
+    size_t strLen = static_cast<size_t>(end - start);
+    auto* pBuf = reinterpret_cast<uint8*>(pEmptyChar);
+    auto* bufEnd = reinterpret_cast<uint8*>(&FontRenderStateBuf[0]) + 0x1CC;
+    if (pBuf + sizeof(CFontChar) + strLen + 1 > bufEnd) {
+        RenderFontBuffer();
+        pBuf = reinterpret_cast<uint8*>(pEmptyChar);
+    }
+
+    auto* fontChar = reinterpret_cast<CFontChar*>(pBuf);
+    fontChar->m_vPosn = CVector2D(x, y);
+    fontChar->m_fWidth = m_Scale.x;
+    fontChar->m_fHeight = m_Scale.y;
+    fontChar->m_color = m_Color;
+    fontChar->m_fWrap = wrap;
+    fontChar->m_fSlant = m_fSlant;
+    fontChar->m_vSlanRefPoint = m_fSlantRefPoint;
+    fontChar->m_nFontStyle = m_FontStyle;
+    fontChar->m_bPropOn = m_bFontPropOn;
+    fontChar->m_wFontTexture = m_FontTextureId;
+    fontChar->m_bContainImages = m_bFontIsBlip;
+    fontChar->m_nOutline = m_nFontOutline;
+
+    pBuf += sizeof(CFontChar);
+
+    CRGBA savedColor = m_Color;
+
+    for (const GxtChar* p = start; p < end;) {
+        if (*p == '~') {
+            CRGBA color = m_Color;
+            const GxtChar* next = ParseToken(const_cast<char*>(p), color, m_bFontIsBlip, nullptr);
+            if (!m_bFontIsBlip && !PS2Symbol) {
+                m_Color.r = color.r;
+                m_Color.g = color.g;
+                m_Color.b = color.b;
+            }
+            PS2Symbol = EXSYMBOL_NONE;
+            while (p < next) {
+                *pBuf++ = static_cast<uint8>(*p++);
+            }
+        } else {
+            *pBuf++ = static_cast<uint8>(*p++);
+        }
+    }
+    *pBuf++ = '\0';
+
+    while (reinterpret_cast<uintptr_t>(pBuf) & 3) {
+        *pBuf++ = '\0';
+    }
+    pEmptyChar = reinterpret_cast<CFontChar*>(pBuf);
+
+    if (!m_bFontIsBlip) {
+        m_Color = savedColor;
+    }
 }
 
 // 0x71A0E0
@@ -658,7 +863,145 @@ void CFont::DrawFonts() {
 
 // 0x71A220
 int16 CFont::ProcessCurrentString(bool print, float x, float y, const GxtChar* text) {
-    return plugin::CallAndReturn<int16, 0x71A220, bool, float, float, const GxtChar*>(print, x, y, text);
+    if (!text || *text == '\0') {
+        return 0;
+    }
+
+    CRGBA savedColor = m_Color;
+    int16 numLines = 0;
+    float curY = y;
+    float curLineWidth = 0.0f;
+    if (!m_bFontCentreAlign && !m_bFontRightAlign) {
+        curLineWidth = x;
+    }
+
+    const GxtChar* pLineStart = text;
+    const GxtChar* pCur = text;
+    bool firstWordInLine = true;
+    int32 spacesCount = 0;
+    float previousLineWidth = 0.0f;
+    GxtChar lastTag = 0;
+    GxtChar tagBuffer[256];
+
+    while (*pCur != '\0') {
+        PS2Symbol = EXSYMBOL_NONE;
+        float wordWidth = GetStringWidth(pCur, false, false);
+
+        if (*pCur == '~') {
+            CRGBA tokenColor;
+            char tag = 0;
+            const GxtChar* next = ParseToken(const_cast<char*>(pCur), tokenColor, true, &tag);
+            if (tag != 0) {
+                lastTag = tag;
+            }
+            pCur = next;
+        }
+
+        float wrapLimit;
+        if (m_bFontCentreAlign) {
+            wrapLimit = m_fFontCentreSize;
+        } else if (m_bFontRightAlign) {
+            wrapLimit = x - m_fRightJustifyWrap;
+        } else {
+            wrapLimit = m_fWrapx;
+        }
+
+        float totalWidth = curLineWidth + wordWidth;
+        curLineWidth = totalWidth;
+
+        if ((totalWidth > wrapLimit && !firstWordInLine) || m_bNewLine) {
+            const GxtChar* pLineEnd = pCur;
+            if (PS2Symbol != EXSYMBOL_NONE) {
+                pLineEnd -= 3;
+            }
+            if (m_bNewLine) {
+                pLineEnd -= 3;
+            }
+
+            float fWrap = 0.0f;
+            if (m_bFontJustify && !m_bFontCentreAlign && spacesCount > 0) {
+                fWrap = (m_fWrapx - previousLineWidth) / static_cast<float>(spacesCount);
+            }
+
+            float lineX;
+            if (m_bFontCentreAlign) {
+                lineX = x - previousLineWidth * 0.5f;
+            } else if (m_bFontRightAlign) {
+                lineX = x - previousLineWidth - GetCharacterSize(0);
+            } else {
+                lineX = x;
+            }
+
+            numLines++;
+            if (print) {
+                PrintSubString(lineX, curY, pLineStart, pLineEnd, fWrap);
+            }
+
+            if (lastTag != 0) {
+                sprintf(gString, "~%c~", lastTag);
+                strcpy(tagBuffer, gString);
+                if (m_bNewLine) {
+                    pLineEnd += 3;
+                }
+                strcat(tagBuffer, pLineEnd);
+                pCur = tagBuffer;
+                lastTag = 0;
+            }
+
+            curY += GetHeight();
+            m_bNewLine = false;
+            if (!m_bFontCentreAlign && !m_bFontRightAlign) {
+                curLineWidth = x;
+            } else {
+                curLineWidth = 0.0f;
+            }
+            pLineStart = pCur;
+            spacesCount = 0;
+            previousLineWidth = 0.0f;
+            firstWordInLine = true;
+        } else {
+            previousLineWidth = curLineWidth;
+            while (*pCur != ' ' && *pCur != '\0' && *pCur != '~') {
+                pCur++;
+            }
+
+            if (*pCur == '\0') {
+                float lineX;
+                if (m_bFontCentreAlign) {
+                    lineX = x - curLineWidth * 0.5f;
+                } else if (m_bFontRightAlign) {
+                    lineX = x - curLineWidth;
+                } else {
+                    lineX = x;
+                }
+
+                numLines++;
+                if (print) {
+                    PrintSubString(lineX, curY, pLineStart, pCur, 0.0f);
+                }
+            } else {
+                if (!firstWordInLine) {
+                    spacesCount++;
+                }
+                if (*pCur != '~') {
+                    curLineWidth += GetCharacterSize(0);
+                    pCur++;
+                }
+                previousLineWidth = curLineWidth;
+                firstWordInLine = false;
+            }
+        }
+
+        if (PS2Symbol != EXSYMBOL_NONE) {
+            PS2Symbol = EXSYMBOL_NONE;
+        }
+    }
+
+    if (print) {
+        SetColor(savedColor);
+    }
+
+    return numLines;
 }
 
 // 0x71A5E0
@@ -759,7 +1102,39 @@ float CFont::GetHeight(bool a1) {
 
 // 0x719670, original name unknown
 float GetScriptLetterSize(uint8 letterId) {
-    return plugin::CallAndReturn<float, 0x719670, uint8>(letterId);
+    if (letterId == '?') {
+        letterId = 0;
+    }
+
+    const auto& scriptText = CTheScripts::IntroTextLines[CTheScripts::NumberOfIntroTextLinesThisFrame];
+    uint8 propValueIdx{};
+    uint8 fontTextureId{};
+
+    if (scriptText.FontStyle == 2) {
+        fontTextureId = 0;
+        propValueIdx = CFont::FindSubFontCharacter(letterId, 2);
+    } else if (scriptText.FontStyle == 3) {
+        fontTextureId = 1;
+        propValueIdx = CFont::FindSubFontCharacter(letterId, 1);
+    } else {
+        fontTextureId = static_cast<uint8>(scriptText.FontStyle);
+        if (letterId == 145) { // 0x91
+            propValueIdx = '@';
+        } else if (letterId > 155) { // 0x9B
+            propValueIdx = 0;
+        } else {
+            propValueIdx = letterId;
+        }
+    }
+
+    float width{};
+    if (scriptText.IsProportional) {
+        width = static_cast<float>(gFontData[fontTextureId].m_propValues[propValueIdx]);
+    } else {
+        width = static_cast<float>(gFontData[fontTextureId].m_unpropValue);
+    }
+
+    return (width + static_cast<float>(scriptText.TextEdge)) * scriptText.Scale.x;
 }
 
 // 0x7192C0
@@ -777,7 +1152,7 @@ uint8 CFont::FindSubFontCharacter(uint8 letterId, uint8 fontStyle) {
     }
 
     if (letterId == 6)                      return 10;
-    if (letterId >=  16 && letterId <=  25) return letterId - 128;
+    if (letterId >=  16 && letterId <=  25) return static_cast<uint8>(letterId + 128);
     if (letterId == 31)                     return 91;
     if (letterId >=  33 && letterId <=  58) return letterId + 122;
     if (letterId == 62)                     return 32;
