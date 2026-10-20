@@ -1,16 +1,16 @@
 # Reimplementation progress (*): 93%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 06:01:41 UTC
+Last update was at Oct 20, 2026 at 06:04:59 UTC
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7722 out of 8295 functions done in 719 categories)
+## Stats (7727 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (676/719) [94%]
+#### Completely reversed categories (677/719) [94%]
 
 <details>
 <summary>See list of categories</summary>
@@ -568,6 +568,7 @@ Last update was at Oct 20, 2026 at 06:01:41 UTC
 - CTaskSimpleIKLookAt (8)<br />
 - CTaskComplexDie (5)<br />
 - CTaskComplexEnterBoatAsDriver (8)<br />
+- CTaskSimpleFight (5)<br />
 - CTaskComplexUseWaterCannon (5)<br />
 - CTaskSimplePickUpEntity (4)<br />
 - CTaskComplexBeInGroup (10)<br />
@@ -738,12 +739,11 @@ Last update was at Oct 20, 2026 at 06:01:41 UTC
 
 </details>
 
-#### Not-at-all reversed categories (5/719) [0.7%]
+#### Not-at-all reversed categories (4/719) [0.6%]
 
 <details>
 <summary>See list of categories</summary>
 - CTaskComplexGangFollower (7)<br />
-- CTaskSimpleFight (5)<br />
 - CDecisionMakerTypes (8)<br />
 - Interior_c (52)<br />
 - CMemoryMgr (7)<br />

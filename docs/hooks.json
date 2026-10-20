@@ -31787,27 +31787,27 @@
   {
     "Category": "CTaskSimpleFight",
     "Name": "ControlFight",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimpleFight",
     "Name": "IsComboSet",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimpleFight",
     "Name": "IsHitComboSet",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimpleFight",
     "Name": "GetComboAnimGroupID",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimpleFight",
     "Name": "LoadMeleeData",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexUseWaterCannon",

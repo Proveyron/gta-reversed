@@ -14,22 +14,39 @@ CTaskSimpleFight::~CTaskSimpleFight() {
 
 // 0x61C5E0
 bool CTaskSimpleFight::ControlFight(CEntity* entity, uint8 command) {
-    return plugin::CallMethodAndReturn<bool, 0x61C5E0, CTaskSimpleFight*, CEntity*, uint8>(this, entity, command);
+    m_bIsInControl = true;
+    if (entity != m_pTargetEntity) {
+        CEntity::SafeCleanUpRef(m_pTargetEntity);
+        m_pTargetEntity = entity;
+        if (m_pTargetEntity) {
+            CEntity::RegisterReference(m_pTargetEntity);
+        }
+    }
+    if (command > m_nNextCommand) {
+        m_nNextCommand = command;
+    }
+    return true;
 }
 
 // 0x4ABDC0
 bool CTaskSimpleFight::IsComboSet() {
-    return plugin::CallMethodAndReturn<bool, 0x4ABDC0, CTaskSimpleFight*>(this);
+    int32 idx = std::max(0, m_nComboSet - 4);
+    return (m_aComboData[idx].m_wFlags & (0x10 << m_nCurrentMove)) != 0;
 }
 
 // 0x4ABDF0
 bool CTaskSimpleFight::IsHitComboSet() {
-    return plugin::CallMethodAndReturn<bool, 0x4ABDF0, CTaskSimpleFight*>(this);
+    if (m_nCurrentMove > FIGHT_ATTACK_HIT_3) {
+        return false;
+    }
+    int32 idx = std::max(0, m_nComboSet - 4);
+    return (m_aComboData[idx].m_wFlags & (0x1000 << m_nCurrentMove)) != 0;
 }
 
 // 0x4ABDA0
 AssocGroupId CTaskSimpleFight::GetComboAnimGroupID() {
-    return plugin::CallMethodAndReturn<AssocGroupId, 0x4ABDA0, CTaskSimpleFight*>(this);
+    int32 idx = std::max(0, m_nComboSet - 4);
+    return m_aComboData[idx].m_nAnimGroup;
 }
 
 // 0x5BEDC0
@@ -53,11 +70,11 @@ void CTaskSimpleFight::InjectHooks() {
     RH_ScopedVirtualClass(CTaskSimpleFight, 0x86D684, 9);
     RH_ScopedCategory("Tasks/TaskTypes");
 
-    RH_ScopedInstall(ControlFight, 0x61C5E0, { .Reversed = false });
-    RH_ScopedInstall(IsComboSet, 0x4ABDC0, { .Reversed = false });
-    RH_ScopedInstall(IsHitComboSet, 0x4ABDF0, { .Reversed = false });
-    RH_ScopedInstall(GetComboAnimGroupID, 0x4ABDA0, { .Reversed = false });
-    RH_ScopedInstall(LoadMeleeData, 0x5BEDC0, { .Reversed = false });
+    RH_ScopedInstall(ControlFight, 0x61C5E0);
+    RH_ScopedInstall(IsComboSet, 0x4ABDC0);
+    RH_ScopedInstall(IsHitComboSet, 0x4ABDF0);
+    RH_ScopedInstall(GetComboAnimGroupID, 0x4ABDA0);
+    RH_ScopedInstall(LoadMeleeData, 0x5BEDC0);
 }
 
 CTaskSimpleFight* CTaskSimpleFight::Constructor(CEntity* entity, int32 nCommand, uint32 nIdlePeriod) {
