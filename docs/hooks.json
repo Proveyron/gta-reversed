@@ -13007,7 +13007,7 @@
     {
         "Category": "CPlayerInfo",
         "Name": "FindObjectToSteal",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPlayerInfo",
@@ -13017,12 +13017,12 @@
     {
         "Category": "CPlayerInfo",
         "Name": "Process",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPlayerInfo",
         "Name": "FindClosestCarSectorList",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CPlayerInfo",
@@ -17762,12 +17762,12 @@
     {
         "Category": "FxSystem_c",
         "Name": "AddParticle-v3d",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "FxSystem_c",
         "Name": "AddParticle-mat",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "FxSystem_c",
@@ -17812,7 +17812,7 @@
     {
         "Category": "FxSystem_c",
         "Name": "UpdateBoundingBoxCB",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "FxSystem_c",
@@ -17882,7 +17882,7 @@
     {
         "Category": "FxSystem_c",
         "Name": "Update",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "FxSphere_c",
@@ -38792,17 +38792,17 @@
     {
         "Category": "CBmx",
         "Name": "ProcessDrivingAnims",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CBmx",
         "Name": "PreRender",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CBmx",
         "Name": "ProcessAI",
-        "IsReversed": false
+        "IsReversed": true
     },
     {
         "Category": "CBmx",
