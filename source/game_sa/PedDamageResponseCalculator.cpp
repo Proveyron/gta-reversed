@@ -2,18 +2,19 @@
 
 #include <reversiblebugfixes/Bugs.hpp>
 #include "PedDamageResponseCalculator.h"
+#include "TaskSimpleFight.h"
 
 void CPedDamageResponseCalculator::InjectHooks() {
     RH_ScopedClass(CPedDamageResponseCalculator);
     RH_ScopedCategoryGlobal();
 
     RH_ScopedInstall(Constructor, 0x4AD3F0);
-    RH_ScopedInstall(AccountForPedDamageStats, 0x4AD430, { .Reversed = false });
-    RH_ScopedInstall(AccountForPedArmour, 0x4AD550, { .Reversed = false });
-    RH_ScopedInstall(ComputeWillForceDeath, 0x4AD610, { .Reversed = false });
+    RH_ScopedInstall(AccountForPedDamageStats, 0x4AD430);
+    RH_ScopedInstall(AccountForPedArmour, 0x4AD550);
+    RH_ScopedInstall(ComputeWillForceDeath, 0x4AD610);
     RH_ScopedInstall(ComputeWillKillPed, 0x4B3210);
-    RH_ScopedInstall(IsBleedingWeapon, 0x4B5C2A, { .Reversed = false });
-    RH_ScopedInstall(ComputeDamageResponse, 0x4B5AC0, { .Reversed = false });
+    RH_ScopedInstall(IsBleedingWeapon, 0x4B5C2A);
+    RH_ScopedInstall(ComputeDamageResponse, 0x4B5AC0);
 }
 
 // 0x4AD3F0
@@ -37,7 +38,51 @@ CPedDamageResponseCalculator* CPedDamageResponseCalculator::Constructor(CEntity*
  * @addr 0x4AD430
  */
 void CPedDamageResponseCalculator::AccountForPedDamageStats(CPed* ped, CPedDamageResponse& response) {
-    plugin::CallMethod<0x4AD430, CPedDamageResponseCalculator*, CPed*, CPedDamageResponse&>(this, ped, response);
+    const bool bDamageFactorMax = (m_fDamageFactor == ms_damageFactor);
+
+    if (ped->IsPlayer()) {
+        m_fDamageFactor *= 0.33f;
+    } else {
+        m_fDamageFactor *= ped->m_pStats->m_fDefenseMultiplier;
+    }
+
+    auto applyReduction = [this]() {
+        m_fDamageFactor = std::min(m_fDamageFactor * 0.1f, 12.5f);
+    };
+
+    if (m_pDamager && m_pDamager->IsPed()) {
+        auto* damagerPed = m_pDamager->AsPed();
+        if (damagerPed->IsPlayer()) {
+            if (CPedGroups::AreInSameGroup(ped, damagerPed)) {
+                if (m_weaponType != WEAPON_EXPLOSION && m_weaponType != WEAPON_FLAMETHROWER && !bDamageFactorMax) {
+                    applyReduction();
+                    return;
+                }
+            }
+        }
+    }
+
+    if (ped && ped->IsPlayer()) {
+        if (m_pDamager && m_pDamager->IsPed()) {
+            auto* damagerPed = m_pDamager->AsPed();
+            if (CPedIntelligence::AreFriends(ped, damagerPed)) {
+                applyReduction();
+                return;
+            }
+        }
+    }
+
+    if (m_pDamager && m_pDamager->IsPed()) {
+        auto* damagerPed = m_pDamager->AsPed();
+        if (ped->m_nCreatedBy == PED_MISSION) {
+            if (CPedGroups::AreInSameGroup(ped, damagerPed)) {
+                if (m_weaponType != WEAPON_EXPLOSION && m_weaponType != WEAPON_FLAMETHROWER) {
+                    applyReduction();
+                    return;
+                }
+            }
+        }
+    }
 }
 
 /*!
@@ -47,10 +92,7 @@ void CPedDamageResponseCalculator::AccountForPedDamageStats(CPed* ped, CPedDamag
  * @addr 0x4AD550
  */
 void CPedDamageResponseCalculator::AccountForPedArmour(CPed* ped, CPedDamageResponse& response) {
-    plugin::CallMethod<0x4AD550, CPedDamageResponseCalculator*, CPed*, CPedDamageResponse&>(this, ped, response);
-    return; // todo: not tested
-
-    if (ped->m_fArmour == 0.0f)
+    if (ped->m_fArmour <= 0.0f)
         return;
 
     if (m_weaponType == WEAPON_DROWNING || m_weaponType == WEAPON_FALL)
@@ -109,7 +151,89 @@ void CPedDamageResponseCalculator::AdjustPedDamage(CPed* ped) {
  * @addr 0x4AD610
  */
 bool CPedDamageResponseCalculator::ComputeWillForceDeath(CPed* ped, CPedDamageResponse& response) {
-    return plugin::CallMethodAndReturn<bool, 0x4AD610, CPedDamageResponseCalculator*, CPed*, CPedDamageResponse&>(this, ped, response);
+    if (ped->bImmuneToHeadshots) {
+        return false;
+    }
+
+    switch (m_weaponType) {
+    case WEAPON_KATANA: {
+        if (!m_pDamager || !m_pDamager->IsPed()) {
+            return false;
+        }
+        auto* damagerPed = m_pDamager->AsPed();
+        if (!damagerPed->IsPlayer()) {
+            return false;
+        }
+        auto* fightTask = damagerPed->GetIntelligence()->GetTaskFighting();
+        if (!fightTask || fightTask->m_nComboSet != 11) {
+            return false;
+        }
+        if (fightTask->m_nCurrentMove == FIGHT_ATTACK_HIT_3) {
+            return (CGeneral::GetRandomNumber() & 1) != 0;
+        }
+        return (CGeneral::GetRandomNumber() & 7) == 0;
+    }
+    case WEAPON_PISTOL:
+    case WEAPON_PISTOL_SILENCED:
+    case WEAPON_DESERT_EAGLE:
+    case WEAPON_SHOTGUN:
+    case WEAPON_SAWNOFF_SHOTGUN:
+    case WEAPON_SPAS12_SHOTGUN:
+    case WEAPON_MICRO_UZI:
+    case WEAPON_MP5:
+    case WEAPON_AK47:
+    case WEAPON_M4:
+    case WEAPON_TEC9:
+    case WEAPON_COUNTRYRIFLE:
+    case WEAPON_SNIPERRIFLE:
+    case WEAPON_MINIGUN:
+    case static_cast<eWeaponType>(52): {
+        int32 chance;
+        if (!ped->IsPlayer() && !ped->bImmuneToHeadshots) {
+            if (m_weaponType == WEAPON_SNIPERRIFLE || m_weaponType == WEAPON_COUNTRYRIFLE) {
+                chance = 0;
+            } else {
+                chance = CGeneral::GetRandomNumber() & 7;
+            }
+        } else {
+            chance = 1;
+        }
+
+        if (ped->bIsPlayerFriend && ped->m_nPedType != PED_TYPE_PLAYER1 && !ped->IsPlayer() && !ped->bImmuneToHeadshots) {
+            return m_bodyPart == PED_PIECE_HEAD;
+        }
+
+        if (!ped->IsPlayer() && m_pDamager && m_pDamager->IsPed()) {
+            auto* damagerPed = m_pDamager->AsPed();
+            if (damagerPed->IsPlayer()) {
+                auto* player = damagerPed->AsPlayerPed();
+                if (player->m_pPlayerData && (player->m_pPlayerData->m_nTargetBone == 5 || player->m_pPlayerData->m_bFreeAiming)) {
+                    return m_bodyPart == PED_PIECE_HEAD;
+                }
+            }
+        }
+
+        if (chance == 0) {
+            return m_bodyPart == PED_PIECE_HEAD;
+        }
+        return false;
+    }
+    case WEAPON_GRENADE:
+    case WEAPON_RLAUNCHER:
+    case WEAPON_RLAUNCHER_HS:
+    case WEAPON_REMOTE_SATCHEL_CHARGE:
+    case WEAPON_EXPLOSION: {
+        if (!CLocalisation::KillPeds()) {
+            return false;
+        }
+        if (ped->IsPlayer() || ped->bIsPlayerFriend) {
+            return false;
+        }
+        return (m_fDamageFactor + 1.0f) >= ped->m_fHealth;
+    }
+    default:
+        return false;
+    }
 }
 
 /*!
@@ -191,6 +315,71 @@ bool CPedDamageResponseCalculator::IsBleedingWeapon(CPed* ped) const {
  * @addr 0x4B5AC0
  */
 void CPedDamageResponseCalculator::ComputeDamageResponse(CPed* ped, CPedDamageResponse& response, bool bSpeak) {
-    plugin::CallMethod<0x4B5AC0, CPedDamageResponseCalculator*, CPed*, CPedDamageResponse&, bool>(this, ped, response, bSpeak);
-}
+    if (response.m_bDamageCalculated) {
+        return;
+    }
 
+    response.m_fDamageHealth = 0.0f;
+    response.m_fDamageArmor = 0.0f;
+    response.m_bHealthZero = false;
+    response.m_bForceDeath = false;
+    response.m_bDamageCalculated = true;
+    response.m_bCheckIfAffectsPed = true;
+
+    AccountForPedDamageStats(ped, response);
+    AccountForPedArmour(ped, response);
+    ComputeWillKillPed(ped, response, bSpeak);
+
+    if (m_pDamager) {
+        auto* player = FindPlayerPed();
+        auto* playerVeh = FindPlayerVehicle();
+        if ((m_pDamager == player || m_pDamager == playerVeh) && m_pDamager != ped) {
+            if (response.m_fDamageHealth + response.m_fDamageArmor > 0.0f) {
+                CWorld::Players[CWorld::PlayerInFocus].m_nHavocCaused++;
+            }
+        }
+    }
+
+    if (ped == FindPlayerPed()) {
+        FindPlayerPed()->AnnoyPlayerPed(false);
+    }
+
+    if (ped->IsPlayer()) {
+        if (m_pDamager && m_pDamager->IsPed()) {
+            CEventDamage eventDamage(
+                const_cast<CEntity*>(m_pDamager),
+                0,
+                m_weaponType,
+                m_bodyPart,
+                0,
+                false,
+                ped->bInVehicle
+            );
+            ped->AsPlayerPed()->MakeGroupRespondToPlayerTakingDamage(eventDamage);
+        }
+    }
+
+    if (response.m_fDamageHealth + response.m_fDamageArmor > 0.0f) {
+        if (IsBleedingWeapon(ped)) {
+            ped->field_72F = 200;
+        }
+
+        if (ped == FindPlayerPed()) {
+            CWorld::Players[CWorld::PlayerInFocus].m_nLastTimeEnergyLost = CTimer::GetTimeInMS();
+        }
+
+        ped->m_nLastWeaponDamage = static_cast<char>(m_weaponType);
+        if (m_pDamager) {
+            ped->m_pLastEntityDamage = const_cast<CEntity*>(m_pDamager);
+            CEntity::RegisterReference(ped->m_pLastEntityDamage);
+            ped->field_768 = static_cast<int32>(CTimer::GetTimeInMS());
+
+            if (m_pDamager->IsPed() && m_pDamager->AsPed()->IsPlayer()) {
+                auto* player = FindPlayerPed();
+                if (player && player->m_pPlayerData) {
+                    CPedGroups::GetGroup(player->m_pPlayerData->m_nPlayerGroup).GetMembership().IsMember(ped);
+                }
+            }
+        }
+    }
+}
